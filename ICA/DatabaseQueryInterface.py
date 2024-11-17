@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-class DatabaseQuery(ABC):
+class DatabaseQueryInterface(ABC):
     @abstractmethod
     def get_average_temperature(self, city: str, year: int):
         """

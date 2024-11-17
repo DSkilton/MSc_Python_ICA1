@@ -2,7 +2,8 @@
 # Student ID: <S631>
 
 import sqlite3
-
+from DatabaseManager import DatabaseManager
+from SQLiteQuery import SQLiteQuery
 
 # Phase 1 - Starter
 # 
@@ -36,8 +37,16 @@ def select_all_countries(connection):
         print(ex)
 
 def select_all_cities(connection):
-    # TODO: Implement this function
-    pass
+    try:
+        results = query_instance.select_all_cities()
+
+        for result in results:
+            print(f"City Id: {result['id']} -- City Name: {result['name']} -- Country Id: {result['country_id']}")
+
+
+    except SQLiteQuery.OperationalError as e:
+        print(e)
+    
 
 '''
 Good
@@ -63,12 +72,16 @@ def average_annual_precipitation_by_country(connection, year):
 
 '''
 Excellent
-
 You have gone beyond the basic requirements for this aspect.
-
 '''
 
 if __name__ == "__main__":
     # Create a SQLite3 connection and call the various functions
     # above, printing the results to the terminal.
-    pass
+    # Initialize DatabaseManager and SQLiteQuery
+    db_path = "db/CIS4044-N-SDI-OPENMETEO-PARTIAL.db"
+    db_manager = DatabaseManager(db_path)
+    query_instance = SQLiteQuery(db_manager)
+    
+
+

@@ -1,11 +1,15 @@
 import sqlite3
+import os
 
 class DatabaseManager: # a class to manage db operations
     def __init__(self, db_path: str):
         """
         Constructor to initialize a connection to the SQLite database.
         :param db_path: Path to the SQLite database file.
+        :raises FileNotFoundError: if the database does not exist
         """
+        if not os.path.exists(db_path):
+            raise FileNotFoundError(f"Database not found at location: {db_path}")
         # TODO: ensure if db doesn't exist, appropriate message is returned rather than creating a new db
         self.connection = sqlite3.connect(db_path)
 
