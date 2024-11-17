@@ -10,7 +10,6 @@ class DatabaseManager: # a class to manage db operations
         """
         if not os.path.exists(db_path):
             raise FileNotFoundError(f"Database not found at location: {db_path}")
-        # TODO: ensure if db doesn't exist, appropriate message is returned rather than creating a new db
         self.connection = sqlite3.connect(db_path)
 
 
@@ -18,12 +17,12 @@ class DatabaseManager: # a class to manage db operations
         """
         Executes an SQL query on the database.
         :param query: SQL query string.
-        :param params: Tuple of parameters to safely inject into the query (default is an empty tuple).
         :return: The result of the query (a list of rows).
         """
         cursor = self.connection.cursor()
+        cursor.row_factory = sqlite3.Row
         cursor.execute(query)
-        return cursor.fetchAll()
+        return cursor.fetchall()
     
     
     def close_connection(self):

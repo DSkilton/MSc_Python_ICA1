@@ -22,12 +22,7 @@ def select_all_countries(connection):
         # Define the query
         query = "SELECT * from [countries]"
 
-        # Get a cursor object from the database connection
-        # that will be used to execute database query.
-        cursor = connection.cursor()
-
-        # Execute the query via the cursor object.
-        results = cursor.execute(query)
+        results = connection.execute_query(query=query)
 
         # Iterate over the results and display the results.
         for row in results:
@@ -36,7 +31,7 @@ def select_all_countries(connection):
     except sqlite3.OperationalError as ex:
         print(ex)
 
-def select_all_cities(connection):
+def select_all_cities():
     try:
         results = query_instance.select_all_cities()
 
@@ -51,11 +46,11 @@ def select_all_cities(connection):
 '''
 Good
 '''
-def average_annual_temperature(connection, city_id, year):
+def average_annual_temperature(city_id, year):
     # TODO: Implement this function
     pass
 
-def average_seven_day_precipitation(connection, city_id, start_date):
+def average_seven_day_precipitation(city_id, start_date):
     # TODO: Implement this function
     pass
 
@@ -83,5 +78,5 @@ if __name__ == "__main__":
     db_manager = DatabaseManager(db_path)
     query_instance = SQLiteQuery(db_manager)
     
-
+    select_all_countries(db_manager)
 
