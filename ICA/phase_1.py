@@ -4,6 +4,7 @@
 import sqlite3
 from DatabaseManager import DatabaseManager
 from SQLiteQuery import SQLiteQuery
+from Constants import SELECT_FROM, COUNTRIES_TBL, CITIES_TBL
 
 # Phase 1 - Starter
 # 
@@ -20,8 +21,7 @@ def select_all_countries(connection):
     # console.
     try:
         # Define the query
-        query = "SELECT * from [countries]"
-
+        query = SELECT_FROM + COUNTRIES_TBL
         results = connection.execute_query(query=query)
 
         # Iterate over the results and display the results.
@@ -31,13 +31,14 @@ def select_all_countries(connection):
     except sqlite3.OperationalError as ex:
         print(ex)
 
-def select_all_cities():
+
+def select_all_cities(connection):
     try:
-        results = query_instance.select_all_cities()
+        query = SELECT_FROM + CITIES_TBL
+        results = connection.execute_query(query=query)
 
         for result in results:
             print(f"City Id: {result['id']} -- City Name: {result['name']} -- Country Id: {result['country_id']}")
-
 
     except SQLiteQuery.OperationalError as e:
         print(e)
@@ -47,8 +48,8 @@ def select_all_cities():
 Good
 '''
 def average_annual_temperature(city_id, year):
-    # TODO: Implement this function
-    pass
+    SQLiteQuery.get_average_temperature(city_id=city_id, year=year)
+
 
 def average_seven_day_precipitation(city_id, start_date):
     # TODO: Implement this function
@@ -79,4 +80,7 @@ if __name__ == "__main__":
     query_instance = SQLiteQuery(db_manager)
     
     select_all_countries(db_manager)
+    select_all_cities(db_manager)
+
+    db_manager.close_connection 
 
