@@ -1,6 +1,6 @@
-from DatabaseQueryInterface import DatabaseQueryInterface
-import DatabaseManager as db_manager
-from Constants import DAILY_WEATHER_TBL, CITY, YEAR, TEMP, PRECIP
+from ICA.database_query_interface import DatabaseQueryInterface
+import ICA.database_manager as db_manager
+from Constants import *
 
 
 class SQLiteQuery(DatabaseQueryInterface):
@@ -12,7 +12,8 @@ class SQLiteQuery(DatabaseQueryInterface):
         """
         self.db_manager = db_manager
 
-    def get_average_temperature(self, city_id: int, year: int):
+
+    def get_average_temperature(self, city_id: int, date: int):
         """
         Fetch the average temperature for a specific city and year.
         :param city_id: The city_id to query.
@@ -20,12 +21,13 @@ class SQLiteQuery(DatabaseQueryInterface):
         :return: Average temperature or empty list if no data is available.
         """
         query = f"""
-        SELECT AVG({TEMP})
+        SELECT {MEAN_TEMP}
         FROM {DAILY_WEATHER_TBL}
-        WHERE {city_id} = ? and {YEAR} = ?
+        WHERE {CITY_ID} = ? and {DATE} = ?
         """
-        result = self.db_manager.execute_query(query, (city, year))
+        result = self.db_manager.execute_query(query, (city_id, date))
         return result [0][0] if result else [] 
+    
     
     def get_precipitation_data(self, city: str, year: int):
         """
@@ -41,3 +43,14 @@ class SQLiteQuery(DatabaseQueryInterface):
         """
         result = self.db_manager.execute_query(query, (city, year))
         return result[0][0] if result else []
+    
+
+    def average_seven_day_precipitation(self, city_id, start_date):
+        query = f"""
+        SELECT AVG({PRECIP})
+        FROM {DAILY_WEATHER_TBL}
+        WHERE {CITY_ID} = ? AND {DATE} BETWEEN ? AND ?
+        """
+        end_date = start_date + 6
+        result = self.db_manager.execute_query(query, (city_id, start_date, end_date))
+        return result[0][0] if result else None
