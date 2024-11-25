@@ -11,7 +11,7 @@ class InputHandler:
 
     
     @staticmethod
-    def get_date_input(prompt: str) -> str:
+    def get_year_input(prompt: str) -> str:
         while True:
             user_input = input(prompt)
             if len(user_input) == 4 and user_input.isdigit():

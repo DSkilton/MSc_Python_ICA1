@@ -1,6 +1,6 @@
 from ICA.database_query_interface import DatabaseQueryInterface
 import ICA.database_manager as db_manager
-from Constants import *
+from constants import *
 
 
 class SQLiteQuery(DatabaseQueryInterface):
@@ -51,6 +51,16 @@ class SQLiteQuery(DatabaseQueryInterface):
         FROM {DAILY_WEATHER_TBL}
         WHERE {CITY_ID} = ? AND {DATE} BETWEEN ? AND ?
         """
-        end_date = start_date + 6
+        end_date = int(start_date) + 6
+        result = self.db_manager.execute_query(query, (city_id, start_date, end_date))
+        return result[0][0] if result else None
+    
+
+    def average_mean_temp_by_city(self, city_id, start_date, end_date):
+        query = f"""
+        SELECT AVG({MEAN_TEMP})
+        FROM {DAILY_WEATHER_TBL}
+        WHERE {CITY_ID} = ? AND {DATE} BETWEEN ? AND ? 
+        """
         result = self.db_manager.execute_query(query, (city_id, start_date, end_date))
         return result[0][0] if result else None
