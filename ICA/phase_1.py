@@ -23,6 +23,7 @@ class WeatherDataApplication:
             print("3. Get average annual temperature")
             print("4. Get seven day precipitation")
             print("5. Avg mean temp by city")
+            print('6. Average annual precipitation by city')
             print("0. Exit")
             choice = InputHandler.get_integer_input("Enter your choice: ")
 
@@ -36,6 +37,8 @@ class WeatherDataApplication:
                 self.average_seven_day_precipitation()
             elif choice == 5:
                 self.average_mean_temp_by_city()
+            elif choice == 6:
+                self.average_annual_precipitation_by_country()
             elif choice == 0:
                 self.exit_application()
                 break
@@ -107,7 +110,9 @@ class WeatherDataApplication:
 
     def average_annual_precipitation_by_country(self):
         year = InputHandler.get_year_input("Enter year as YYYY: ")
-        pass
+        city_id = InputHandler.get_integer_input("Enter city ID: ")
+        results = self.query_instance.average_annual_preciption_by_country(city_id, year)
+        print(f"Result: {results} mm of rainfall")
 
     '''
     Excellent

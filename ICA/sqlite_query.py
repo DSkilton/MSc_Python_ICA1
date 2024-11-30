@@ -52,8 +52,8 @@ class SQLiteQuery(DatabaseQueryInterface):
         WHERE {CITY_ID} = ? AND {DATE} BETWEEN ? AND ?
         """
         end_date = int(start_date) + 6
-        result = self.db_manager.execute_query(query, (city_id, start_date, end_date))
-        return result[0][0] if result else None
+        results = self.db_manager.execute_query(query, (city_id, start_date, end_date))
+        return results[0][0] if results else None
     
 
     def average_mean_temp_by_city(self, city_id, start_date, end_date):
@@ -62,5 +62,17 @@ class SQLiteQuery(DatabaseQueryInterface):
         FROM {DAILY_WEATHER_TBL}
         WHERE {CITY_ID} = ? AND {DATE} BETWEEN ? AND ? 
         """
-        result = self.db_manager.execute_query(query, (city_id, start_date, end_date))
-        return result[0][0] if result else None
+        results = self.db_manager.execute_query(query, (city_id, start_date, end_date))
+        return results[0][0] if results else None
+    
+
+    def average_annual_preciption_by_country(self, city_id, year):
+        start_date = START_OF_YEAR + year 
+        end_date = END_OF_YEAR + year
+        query = f"""
+        SELECT SUM({PRECIP})
+        FROM {DAILY_WEATHER_TBL}
+        WHERE {CITY_ID} = ? AND {DATE} BETWEEN ? AND ?
+        """
+        results = self.db_manager.execute_query(query, (city_id, start_date, end_date))
+        return results[0][0] if results else None
