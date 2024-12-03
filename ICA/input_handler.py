@@ -1,4 +1,4 @@
-
+# TODO: Add doc string at class level and method level
 
 class InputHandler:
     @staticmethod

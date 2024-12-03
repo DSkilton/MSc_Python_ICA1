@@ -2,6 +2,7 @@ from ICA.database_query_interface import DatabaseQueryInterface
 import ICA.database_manager as db_manager
 from constants import *
 
+# TODO: Add doc string at class level and method level
 
 class SQLiteQuery(DatabaseQueryInterface):
     

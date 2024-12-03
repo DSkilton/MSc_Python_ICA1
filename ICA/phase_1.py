@@ -2,13 +2,13 @@
 # Student ID: <S631>
 
 import os
-from ICA.database_manager import DatabaseManager
 from input_handler import InputHandler
-from ICA.sqlite_query import SQLiteQuery
 from constants import SELECT_FROM, COUNTRIES_TBL, CITIES_TBL
 from output_handler import OutputHandler
+from ICA.sqlite_query import SQLiteQuery
+from ICA.database_manager import DatabaseManager
 
-# Note: Display all real/float numbers to 2 decimal places.
+# TODO: Add doc string at class level and method level
 
 class WeatherDataApplication:
     def __init__(self, db_path: str):

@@ -1,6 +1,8 @@
 import sqlite3
 import os
 
+# TODO: Add doc string at class level and method level
+
 class DatabaseManager: # a class to manage db operations
     def __init__(self, db_path: str):
         """
