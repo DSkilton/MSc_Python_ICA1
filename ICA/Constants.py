@@ -1,3 +1,12 @@
+"""
+This module defines constants used across the Weather Data Application.
+
+Constants include:
+- Date strings for the start and end of the year.
+- SQL query components for database interactions.
+- Table names and field names for the SQLite database.
+"""
+
 # Date
 START_OF_YEAR = "01/01"
 END_OF_YEAR = "31/12/"

@@ -1,0 +1,5 @@
+# TODO: Sort this! 
+https://stackoverflow.com/questions/31684375/automatically-create-file-requirements-txt
+
+pip install pipreqs
+pipreqs /path/to/project

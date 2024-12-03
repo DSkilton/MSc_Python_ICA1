@@ -1,0 +1,2 @@
+Write tests for doc strings
+print(WeatherDataApplication.__doc__)

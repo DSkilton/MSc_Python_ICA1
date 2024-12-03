@@ -5,7 +5,8 @@ from constants import *
 # TODO: Add doc string at class level and method level
 
 class SQLiteQuery(DatabaseQueryInterface):
-    
+
+
     def __init__(self, db_manager):
         """
         Initialize the SQLiteQuery class with a DatabaseManager instance.
@@ -27,9 +28,9 @@ class SQLiteQuery(DatabaseQueryInterface):
         WHERE {CITY_ID} = ? and {DATE} = ?
         """
         result = self.db_manager.execute_query(query, (city_id, date))
-        return result [0][0] if result else [] 
-    
-    
+        return result [0][0] if result else []
+
+
     def get_precipitation_data(self, city: str, year: int):
         """
         Fetch the total precipitation for a specific city and year.
@@ -44,7 +45,7 @@ class SQLiteQuery(DatabaseQueryInterface):
         """
         result = self.db_manager.execute_query(query, (city, year))
         return result[0][0] if result else []
-    
+
 
     def average_seven_day_precipitation(self, city_id, start_date):
         query = f"""
@@ -55,20 +56,20 @@ class SQLiteQuery(DatabaseQueryInterface):
         end_date = int(start_date) + 6
         results = self.db_manager.execute_query(query, (city_id, start_date, end_date))
         return results[0][0] if results else None
-    
+
 
     def average_mean_temp_by_city(self, city_id, start_date, end_date):
         query = f"""
         SELECT AVG({MEAN_TEMP})
         FROM {DAILY_WEATHER_TBL}
-        WHERE {CITY_ID} = ? AND {DATE} BETWEEN ? AND ? 
+        WHERE {CITY_ID} = ? AND {DATE} BETWEEN ? AND ?
         """
         results = self.db_manager.execute_query(query, (city_id, start_date, end_date))
         return results[0][0] if results else None
-    
+
 
     def average_annual_preciption_by_country(self, city_id, year):
-        start_date = START_OF_YEAR + year 
+        start_date = START_OF_YEAR + year
         end_date = END_OF_YEAR + year
         query = f"""
         SELECT SUM({PRECIP})
