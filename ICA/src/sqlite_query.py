@@ -1,5 +1,5 @@
-from ICA.database_query_interface import DatabaseQueryInterface
-import ICA.database_manager as db_manager
+from database_query_interface import DatabaseQueryInterface
+import database_manager as db_manager
 from constants import *
 
 # TODO: Add doc string at class level and method level
@@ -48,6 +48,12 @@ class SQLiteQuery(DatabaseQueryInterface):
 
 
     def average_seven_day_precipitation(self, city_id, start_date):
+        """
+        Fetch the seven day precipitation for a specific seven day period.
+        :param city_id: The city id to query.
+        :param start_date: The start of the seven day period.
+        :return: Total precipitation or empty list if no data is available.
+        """
         query = f"""
         SELECT AVG({PRECIP})
         FROM {DAILY_WEATHER_TBL}
@@ -59,6 +65,13 @@ class SQLiteQuery(DatabaseQueryInterface):
 
 
     def average_mean_temp_by_city(self, city_id, start_date, end_date):
+        """
+        Fetch the mean temperature for a user defined period or time.
+        :param city_id: The city id to query.
+        :param start_date: The start date for the query
+        :param end_date: The end date for the query
+        :return: Average mean temp or empty list if no data is available.
+        """
         query = f"""
         SELECT AVG({MEAN_TEMP})
         FROM {DAILY_WEATHER_TBL}
@@ -69,6 +82,12 @@ class SQLiteQuery(DatabaseQueryInterface):
 
 
     def average_annual_preciption_by_country(self, city_id, year):
+        """
+        Fetch the annual precipitation for a specific city and year.
+        :param city_id: The city id to query.
+        :param start_date: The year to query
+        :return: Average annual precipitation or empty list if no data is available.
+        """
         start_date = START_OF_YEAR + year
         end_date = END_OF_YEAR + year
         query = f"""

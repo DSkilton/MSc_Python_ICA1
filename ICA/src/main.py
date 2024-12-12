@@ -11,12 +11,14 @@ import os
 from input_handler import InputHandler
 from constants import SELECT_FROM, COUNTRIES_TBL, CITIES_TBL
 from output_handler import OutputHandler
-from ICA.sqlite_query import SQLiteQuery
-from ICA.database_manager import DatabaseManager
+from sqlite_query import SQLiteQuery
+from database_manager import DatabaseManager
 
 # TODO: Add doc string at class level and method level
 # TODO: Test doc strings work e.g. print(method/class.__doc__)
+# TODO: Write some integration tests
 # TODO: Check all imports
+# TODO: User date inputs must be historic i.e. no future dates
 
 
 class WeatherDataApplication:
@@ -121,7 +123,7 @@ class WeatherDataApplication:
         Calculate and display the seven-day precipitation total for a specified city and date range.
         """
         city_id = InputHandler.get_integer_input("Enter city ID: ")
-        year = InputHandler.get_year_input("Enter year as YYYY: ")
+        date = InputHandler.get_year_input("Enter year as YYYY: ")
         result = self.query_instance.average_seven_day_precipitation(city_id, year)
         # TODO: Double check output, should it be something more appropriate
         print(f"Average: {OutputHandler.format_two_decimals(result)}")
@@ -154,6 +156,6 @@ if __name__ == "__main__":
     # Create a SQLite3 connection and call the various functions
     # above, printing the results to the terminal.
     # Initialize DatabaseManager and SQLiteQuery
-    DB_PATH = "..\db\CIS4044-N-SDI-OPENMETEO-PARTIAL.db"
+    DB_PATH = "db\\CIS4044-N-SDI-OPENMETEO-PARTIAL.db"
     app = WeatherDataApplication(DB_PATH)
     app.run()
