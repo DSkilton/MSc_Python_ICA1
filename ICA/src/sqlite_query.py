@@ -1,6 +1,8 @@
-from database_query_interface import DatabaseQueryInterface
-import database_manager as db_manager
+from datetime import datetime, timedelta
+from database_manager import DatabaseManager
 from constants import *
+from database_query_interface import DatabaseQueryInterface
+
 
 # TODO: Add doc string at class level and method level
 
@@ -49,19 +51,37 @@ class SQLiteQuery(DatabaseQueryInterface):
 
     def average_seven_day_precipitation(self, city_id, start_date):
         """
-        Fetch the seven day precipitation for a specific seven day period.
-        :param city_id: The city id to query.
-        :param start_date: The start of the seven day period.
-        :return: Total precipitation or empty list if no data is available.
+        Fetch the seven-day precipitation for a specific period.
+
+        Parameters
+        ----------
+        city_id : int
+            The city id to query.
+        start_date : str
+            The start date (dd/mm/yyyy).
+
+        Returns
+        -------
+        float
+            Average precipitation for the seven-day period, or None if no data is available.
         """
-        query = f"""
-        SELECT AVG({PRECIP})
-        FROM {DAILY_WEATHER_TBL}
-        WHERE {CITY_ID} = ? AND {DATE} BETWEEN ? AND ?
-        """
-        end_date = int(start_date) + 6
-        results = self.db_manager.execute_query(query, (city_id, start_date, end_date))
-        return results[0][0] if results else None
+        try:
+            # Convert start_date to database-compatible format (yyyy-mm-dd)
+            parsed_date = datetime.strptime(start_date, "%d/%m/%Y")
+            start_date_db_format = parsed_date.strftime("%Y-%m-%d")
+            end_date = (parsed_date + timedelta(days=6)).strftime("%Y-%m-%d")  # Add 6 days
+
+            # Query database
+            query = f"""
+            SELECT AVG({PRECIP})
+            FROM {DAILY_WEATHER_TBL}
+            WHERE {CITY_ID} = ? AND {DATE} BETWEEN ? AND ?
+            """
+            results = self.db_manager.execute_query(query, (city_id, start_date_db_format, end_date))
+            return results[0][0] if results else None
+        except Exception as e:
+            print(f"Error while processing dates: {e}")
+            return None
 
 
     def average_mean_temp_by_city(self, city_id, start_date, end_date):
@@ -81,7 +101,7 @@ class SQLiteQuery(DatabaseQueryInterface):
         return results[0][0] if results else None
 
 
-    def average_annual_preciption_by_country(self, city_id, year):
+    def average_annual_preciption_by_country(self, country_id, year):
         """
         Fetch the annual precipitation for a specific city and year.
         :param city_id: The city id to query.
@@ -95,5 +115,5 @@ class SQLiteQuery(DatabaseQueryInterface):
         FROM {DAILY_WEATHER_TBL}
         WHERE {CITY_ID} = ? AND {DATE} BETWEEN ? AND ?
         """
-        results = self.db_manager.execute_query(query, (city_id, start_date, end_date))
+        results = self.db_manager.execute_query(query, (country_id, start_date, end_date))
         return results[0][0] if results else None
