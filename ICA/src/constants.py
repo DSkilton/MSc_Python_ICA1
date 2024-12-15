@@ -57,6 +57,7 @@ X_LABEL_COUNTRIES = "Country Name"
 X_LABEL_CITIES = "City Name"
 X_LABEL_TEMPERATURE = "Temperature"
 X_LABEL_PRECIPITATION = "Precipitation"
+X_LABEL_YEAR = "Year"
 
 # y Labels for graphs
 Y_LABEL_COUNTRY_ID = "Country Id"

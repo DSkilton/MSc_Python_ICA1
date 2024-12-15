@@ -6,13 +6,15 @@ This module initializes and runs the WeatherDataApplication.
 
 # Author: <Duncan Skilton>
 # Student ID: <S6310391>
-
+import sqlite3
 from datetime import datetime
 from input_handler import InputHandler
 from constants import (
-    SELECT_FROM, COUNTRIES_TBL, CITIES_TBL, DISPLAY_CONSOLE, DISPLAY_BAR_CHART,
-    MENU_VIEW_COUNTRIES, MENU_VIEW_CITIES, MENU_AVG_TEMP, MENU_7DAY_PRECIP,
-    MENU_MEAN_TEMP_CITY, MENU_ANNUAL_PRECIP_CITY, MENU_GRAPHS, MENU_EXIT
+    SELECT_FROM, COUNTRIES_TBL, CITIES_TBL, MENU_VIEW_COUNTRIES, MENU_VIEW_CITIES, MENU_AVG_TEMP, 
+    MENU_7DAY_PRECIP, MENU_MEAN_TEMP_CITY, MENU_ANNUAL_PRECIP_CITY, MENU_EXIT, TITLE_COUNTRIES, 
+    TITLE_7DAY_PRECIP, TITLE_MEAN_TEMP_CITY, TITLE_ANNUAL_PRECIP, TITLE_AVG_TEMP, X_LABEL_PRECIPITATION, 
+    X_LABEL_TEMPERATURE, Y_LABEL_CITY_ID, Y_LABEL_TEMPERATURE, Y_LABEL_PRECIPITATION, X_LABEL_YEAR,
+    TITLE_CITIES, X_LABEL_CITIES, X_LABEL_COUNTRIES, Y_LABEL_COUNTRY_ID
 )
 from output_handler import OutputHandler
 from sqlite_query import SQLiteQuery
@@ -26,6 +28,10 @@ from graph_handler import GraphHandler
 # TODO: Write some integration tests
 # TODO: Check all imports
 # TODO: User date inputs must be historic i.e. no future dates
+# TODO: Check menu option 3, annual temp
+# TODO: Check menu option 4
+# TODO: Add formatting to 2 decimals back in output handler
+
 
 # Register handlers dynamically
 OutputHandlerRegistry.register_handler("console", OutputHandler.handle_console)
@@ -59,7 +65,7 @@ class WeatherDataApplication:
 
         Parameters
         ----------
-        results : list[dict]
+        results : list[sqlite3.Row]
             Query results from the database.
 
         Returns
@@ -67,10 +73,17 @@ class WeatherDataApplication:
         bool
             True if results are valid, False otherwise. Prints an error message if results are empty.
         """
+        print("DEBUG: Validating results:", results)  # Debugging output to check data structure
         if not results:
-            print("No data available.")
+            print("No data available. Returning to the main menu...")
             return False
-        return True
+
+        # Check if results are iterable and if rows are accessible
+        if isinstance(results, list) and all(isinstance(row, sqlite3.Row) for row in results):
+            return True
+
+        print("Invalid data format. Returning to the main menu...")
+        return False
 
 
     def run(self):
@@ -94,23 +107,26 @@ class WeatherDataApplication:
             print("0. Exit")
             choice = InputHandler.get_integer_input("Enter your choice: ")
 
-            if choice == MENU_VIEW_COUNTRIES:
-                self.select_all_countries()
-            elif choice == MENU_VIEW_CITIES:
-                self.select_all_cities()
-            elif choice == MENU_AVG_TEMP:
-                self.average_annual_temperature()
-            elif choice == MENU_7DAY_PRECIP:
-                self.average_seven_day_precipitation()
-            elif choice == MENU_MEAN_TEMP_CITY:
-                self.average_mean_temp_by_city()
-            elif choice == MENU_ANNUAL_PRECIP_CITY:
-                self.average_annual_precipitation_by_country()
-            elif choice == MENU_EXIT:
-                self.exit_application()
-                break
-            else:
-                print("Invalid choice, try again")
+            try:
+                if choice == MENU_VIEW_COUNTRIES:
+                    self.select_all_countries()
+                elif choice == MENU_VIEW_CITIES:
+                    self.select_all_cities()
+                elif choice == MENU_AVG_TEMP:
+                    self.average_annual_temperature()
+                elif choice == MENU_7DAY_PRECIP:
+                    self.average_seven_day_precipitation()
+                elif choice == MENU_MEAN_TEMP_CITY:
+                    self.average_mean_temp_by_city()
+                elif choice == MENU_ANNUAL_PRECIP_CITY:
+                    self.average_annual_precipitation_by_country()
+                elif choice == MENU_EXIT:
+                    self.exit_application()
+                    break
+                else:
+                    print("Invalid choice, try again")
+            except Exception as e:
+                print(f"An error occurred: {e}. Returning to the main menu...")
 
 
     def exit_application(self):
@@ -151,7 +167,7 @@ class WeatherDataApplication:
 
         choice = self.get_display_choice()
         # TODO: Change these string literals to constants
-        OutputHandler.handle_output(choice, results, title=TITLE_COUNTRIES, xlabel=X_LABEL_COUNTRY_NAME, ylabel=Y_LABEL_ID)
+        OutputHandler.handle_output(choice, results, title=TITLE_COUNTRIES, xlabel=X_LABEL_COUNTRIES, ylabel=Y_LABEL_COUNTRY_ID)
 
 
     def select_all_cities(self):
@@ -165,7 +181,7 @@ class WeatherDataApplication:
             return
 
         choice = self.get_display_choice()
-        OutputHandler.handle_output(choice, results, title=TITLE_CITY, xlabel=X_LABEL_CITY_NAME, ylabel=Y_LABEL_CITY_ID)
+        OutputHandler.handle_output(choice, results, title=TITLE_CITIES, xlabel=X_LABEL_CITIES, ylabel=Y_LABEL_CITY_ID)
 
 
     def average_annual_temperature(self):
@@ -180,7 +196,7 @@ class WeatherDataApplication:
             return
 
         choice = self.get_display_choice()
-        OutputHandler.handle_output(choice, result, title=TITLE_AVG_TEMP, xlabel=X_LABEL_YEAR, ylabel=Y_LABEL_TEMP)
+        OutputHandler.handle_output(choice, result, title=TITLE_AVG_TEMP, xlabel=X_LABEL_YEAR, ylabel=Y_LABEL_TEMPERATURE)
 
 
     def average_seven_day_precipitation(self):
@@ -190,28 +206,26 @@ class WeatherDataApplication:
         city_id = InputHandler.get_integer_input("Enter city ID: ")
         while True:
             start_date = InputHandler.get_date_input("Enter start date (dd/mm/yyyy): ")
-            # Ensure the start date is historic
             parsed_date = datetime.strptime(start_date, "%d/%m/%Y")
             if parsed_date > datetime.now():
                 print("The start date cannot be in the future. Please try again.")
                 continue
 
-            # Query database and display results
             results = self.query_instance.average_seven_day_precipitation(city_id, start_date)
-
-            if not self.validate_results([results]):  
-                return
+            if not self.validate_results(results):
+                return  # Exit gracefully to the main menu
 
             choice = self.get_display_choice()
             OutputHandler.handle_output(choice, results, title=TITLE_7DAY_PRECIP, xlabel=X_LABEL_PRECIPITATION, ylabel=Y_LABEL_PRECIPITATION)
+            break  # Exit after successful display
 
 
     def average_mean_temp_by_city(self):
         """
         Calculate and display the mean temperature for a city over a specified date range.
         """
-        date_from = InputHandler.get_integer_input("Enter start date: ")
-        date_to = InputHandler.get_integer_input("Enter end date: ")
+        date_from = InputHandler.get_date_input("Enter start date: ")
+        date_to = InputHandler.get_date_input("Enter end date: ")
         city_id = InputHandler.get_integer_input("Enter city ID: ")
         results = self.query_instance.average_mean_temp_by_city(date_from, date_to, city_id)
 
@@ -242,6 +256,6 @@ if __name__ == "__main__":
     # Create a SQLite3 connection and call the various functions
     # above, printing the results to the terminal.
     # Initialize DatabaseManager and SQLiteQuery
-    DB_PATH = "db\\CIS4044-N-SDI-OPENMETEO-PARTIAL.db"
+    DB_PATH = "db\CIS4044-N-SDI-OPENMETEO-PARTIAL.db"
     app = WeatherDataApplication(DB_PATH)
     app.run()

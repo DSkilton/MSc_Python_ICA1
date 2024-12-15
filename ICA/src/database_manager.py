@@ -52,6 +52,8 @@ class DatabaseManager:
         sqlite3.OperationalError
             If the query is invalid or fails to execute.
         """
+        if params is None:
+            params = ()
         cursor = self.connection.cursor()
         cursor.row_factory = sqlite3.Row
         cursor.execute(query, params)
