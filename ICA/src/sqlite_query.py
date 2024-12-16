@@ -67,7 +67,7 @@ class SQLiteQuery(DatabaseQueryInterface):
         city_id : int
             The city id to query.
         start_date : str
-            The start date (dd/mm/yyyy).
+            The start date (yyyy-mm-dd).
 
         Returns
         -------
@@ -76,7 +76,7 @@ class SQLiteQuery(DatabaseQueryInterface):
         """
         try:
             # Convert start_date to database-compatible format (yyyy-mm-dd)
-            parsed_date = datetime.strptime(start_date, "%d/%m/%Y")
+            parsed_date = datetime.strptime(start_date, "%Y-%m-%d")
             start_date_db_format = parsed_date.strftime("%Y-%m-%d")
             end_date = (parsed_date + timedelta(days=6)).strftime("%Y-%m-%d")  # Add 6 days
 

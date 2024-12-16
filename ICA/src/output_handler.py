@@ -20,12 +20,14 @@ class OutputHandler:
         ylabel : str, optional
             The y-axis label for graphical outputs.
         """
-        print("DEBUG: Handling output with results:", results)
-        
+
         if not results:
             print("Error: Invalid or empty dataset.")
             OutputHandler.handle_console([])  # Fallback to an empty console display
             return
+        
+        if not isinstance(results, list):
+            data = [data]
 
         # Convert sqlite3.Row objects to dictionaries if necessary
         if isinstance(results[0], sqlite3.Row):
@@ -41,6 +43,7 @@ class OutputHandler:
 
         if handler:
             try:
+                # TODO: Change the below to constants
                 if "Date Range" in results[0] and "Precipitation (mm)" in results[0]:
                     labels = [row["Date Range"] for row in results]
                     values = [row["Precipitation (mm)"] for row in results]

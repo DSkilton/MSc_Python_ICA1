@@ -32,6 +32,7 @@ from graph_handler import GraphHandler
 # TODO: Check menu option 3, annual temp
 # TODO: Check menu option 4
 # TODO: Add formatting to 2 decimals back in output handler
+# TODO: add data seperator - to constants
 
 
 # Register handlers dynamically
@@ -75,7 +76,7 @@ class WeatherDataApplication:
 
         Parameters
         ----------
-        results : list[sqlite3.Row]
+        results : list
             Query results from the database.
 
         Returns
@@ -84,14 +85,19 @@ class WeatherDataApplication:
             True if results are valid, False otherwise. Prints an error message if results are empty.
         """
         self.logger.debug(f"Validating results: {results}")
+
         if not results:
-            self.logger.warning(f"No data available. Returning to the main menu...")
+            self.logger.warning(f"No data available.")
+            print("Returning to the main menu...")
             return False
 
         # Check if results are iterable and if rows are accessible
-        if isinstance(results, list) and all(isinstance(row, sqlite3.Row) for row in results):
-            return True
+        if isinstance(results, list):
+            if all(isinstance(row, sqlite3.Row) for row in results):
+                return True
+        
         self.logger.error(f"Invalid data format in results")
+        print("Invalid data format. Returning to the main menu...")
         return False
 
 
@@ -204,7 +210,7 @@ class WeatherDataApplication:
         year = InputHandler.get_year_input("Enter year as YYYY: ")
         result = self.query_instance.get_average_temperature(city_id=city_id, year=year)
 
-        if not self.validate_results([result]):  
+        if not self.validate_results([result]):
             return
 
         choice = self.get_display_choice()
@@ -218,7 +224,8 @@ class WeatherDataApplication:
         city_id = InputHandler.get_integer_input("Enter city ID: ")
         while True:
             start_date = InputHandler.get_date_input("Enter start date (yyyy-mm-dd): ")
-            parsed_date = datetime.strptime(start_date, "%d/%m/%Y")
+            parsed_date = datetime.strptime(start_date, "%Y-%m-%d")
+            # TODO: Move this to InputHandler class
             if parsed_date > datetime.now():
                 print("The start date cannot be in the future. Please try again.")
                 continue
@@ -229,7 +236,7 @@ class WeatherDataApplication:
 
             choice = self.get_display_choice()
             OutputHandler.handle_output(choice, results, title=TITLE_7DAY_PRECIP, xlabel=X_LABEL_PRECIPITATION, ylabel=Y_LABEL_PRECIPITATION)
-            break  
+            break
 
 
     def average_mean_temp_by_city(self):

@@ -17,7 +17,7 @@ class InputHandler:
     get_year_input(prompt: str) -> str
         Prompt the user for a year input and validate it as a four-digit year.
     get_date_input(prompt: str) -> str
-        Prompt the user for a date input and validate it in the format dd/mm/yyyy.
+        Prompt the user for a date input and validate it in the format yyyy-mm-dd.
     """
 
 
@@ -102,8 +102,7 @@ class InputHandler:
             user_input = input(prompt)
             try:
                 # Parse the input string to validate it as a date
-                datetime.datetime.strptime(user_input, "/%Y/%m/%d")
+                datetime.datetime.strptime(user_input, "%Y-%m-%d")
                 return user_input
             except ValueError:
-                print("Invalid input. Please enter a date in the format yyyy-mm-dd (e.g., 01-01-2021).")
-
+                print("Invalid input. Please enter a date in the format yyyy-mm-dd (e.g., 2021-01-01).")
