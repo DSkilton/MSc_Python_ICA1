@@ -6,5 +6,9 @@ select * from countries;
 select * from daily_weather_entries;
 
 
+SELECT * FROM daily_weather_entries 
+WHERE city_id = 1 and date = "2020-12-01"
+
+
 
 

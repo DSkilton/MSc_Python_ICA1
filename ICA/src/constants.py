@@ -8,8 +8,8 @@ Constants include:
 """
 
 # Date
-START_OF_YEAR = "01/01"
-END_OF_YEAR = "31/12/"
+START_OF_YEAR = "-01-01"
+END_OF_YEAR = "-12-31"
 
 # Query
 SELECT_FROM = "SELECT * FROM "

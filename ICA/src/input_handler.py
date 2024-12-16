@@ -77,7 +77,7 @@ class InputHandler:
     @staticmethod
     def get_date_input(prompt: str) -> str:
         """
-        Prompt the user for a date input and validate it in the format dd/mm/yyyy.
+        Prompt the user for a date input and validate it in the format yyyy-mm-dd.
 
         Parameters
         ----------
@@ -87,7 +87,7 @@ class InputHandler:
         Returns
         -------
         str
-            The validated date input as a string in the format dd/mm/yyyy.
+            The validated date input as a string in the format yyyy-mm-dd.
 
         Raises
         ------
@@ -96,14 +96,14 @@ class InputHandler:
 
         Notes
         -----
-        The date must be valid and conform to the format dd/mm/yyyy.
+        The date must be valid and conform to the format yyyy-mm-dd.
         """
         while True:
             user_input = input(prompt)
             try:
                 # Parse the input string to validate it as a date
-                datetime.datetime.strptime(user_input, "%d/%m/%Y")
+                datetime.datetime.strptime(user_input, "/%Y/%m/%d")
                 return user_input
             except ValueError:
-                print("Invalid input. Please enter a date in the format dd/mm/yyyy (e.g., 01/01/2021).")
+                print("Invalid input. Please enter a date in the format yyyy-mm-dd (e.g., 01-01-2021).")
 

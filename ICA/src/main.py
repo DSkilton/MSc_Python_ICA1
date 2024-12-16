@@ -7,6 +7,7 @@ This module initializes and runs the WeatherDataApplication.
 # Author: <Duncan Skilton>
 # Student ID: <S6310391>
 import sqlite3
+import logging
 from datetime import datetime
 from input_handler import InputHandler
 from constants import (
@@ -38,6 +39,13 @@ OutputHandlerRegistry.register_handler("console", OutputHandler.handle_console)
 OutputHandlerRegistry.register_handler("bar_chart", GraphHandler.plot_bar)
 OutputHandlerRegistry.register_handler("pie_chart", GraphHandler.plot_pie)
 
+logging.basicConfig(
+    level=logging.DEBUG, 
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.StreamHandler() #output to console
+    ]
+)
 
 class WeatherDataApplication:
     """
@@ -55,10 +63,12 @@ class WeatherDataApplication:
         db_path : str
             The path to the SQLite database file.
         """
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.db_manager = DatabaseManager(db_path)
         self.query_instance = SQLiteQuery(self.db_manager)
+        self.logger.info("WeatherDataApplication initialised")
 
-    
+
     def validate_results(self, results):
         """
         Validate query results to ensure they contain data.
@@ -73,16 +83,15 @@ class WeatherDataApplication:
         bool
             True if results are valid, False otherwise. Prints an error message if results are empty.
         """
-        print("DEBUG: Validating results:", results)  # Debugging output to check data structure
+        self.logger.debug(f"Validating results: {results}")
         if not results:
-            print("No data available. Returning to the main menu...")
+            self.logger.warning(f"No data available. Returning to the main menu...")
             return False
 
         # Check if results are iterable and if rows are accessible
         if isinstance(results, list) and all(isinstance(row, sqlite3.Row) for row in results):
             return True
-
-        print("Invalid data format. Returning to the main menu...")
+        self.logger.error(f"Invalid data format in results")
         return False
 
 
@@ -96,6 +105,7 @@ class WeatherDataApplication:
 
         The menu continues to loop until the user chooses to exit.
         """
+        self.logger.info("Application started")
         while True:
             print("Weather Data Application")
             print("1. View all countries")
@@ -124,8 +134,10 @@ class WeatherDataApplication:
                     self.exit_application()
                     break
                 else:
+                    self.logger.warning(f"Invalid choice: {choice}")
                     print("Invalid choice, try again")
             except Exception as e:
+                self.logger.error(f"An error occurred: {e}")
                 print(f"An error occurred: {e}. Returning to the main menu...")
 
 
@@ -190,7 +202,7 @@ class WeatherDataApplication:
         """
         city_id = InputHandler.get_integer_input("Enter city ID: ")
         year = InputHandler.get_year_input("Enter year as YYYY: ")
-        result = self.query_instance.get_average_temperature(city_id=city_id, date=year)
+        result = self.query_instance.get_average_temperature(city_id=city_id, year=year)
 
         if not self.validate_results([result]):  
             return
@@ -205,7 +217,7 @@ class WeatherDataApplication:
         """
         city_id = InputHandler.get_integer_input("Enter city ID: ")
         while True:
-            start_date = InputHandler.get_date_input("Enter start date (dd/mm/yyyy): ")
+            start_date = InputHandler.get_date_input("Enter start date (yyyy-mm-dd): ")
             parsed_date = datetime.strptime(start_date, "%d/%m/%Y")
             if parsed_date > datetime.now():
                 print("The start date cannot be in the future. Please try again.")
@@ -217,7 +229,7 @@ class WeatherDataApplication:
 
             choice = self.get_display_choice()
             OutputHandler.handle_output(choice, results, title=TITLE_7DAY_PRECIP, xlabel=X_LABEL_PRECIPITATION, ylabel=Y_LABEL_PRECIPITATION)
-            break  # Exit after successful display
+            break  
 
 
     def average_mean_temp_by_city(self):

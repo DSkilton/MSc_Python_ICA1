@@ -1,3 +1,4 @@
+import logging 
 from datetime import datetime, timedelta
 from database_manager import DatabaseManager
 from constants import *
@@ -14,22 +15,28 @@ class SQLiteQuery(DatabaseQueryInterface):
         Initialize the SQLiteQuery class with a DatabaseManager instance.
         :param db_manager: Instance of DatabaseManager to handle SQLite connections.
         """
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.db_manager = db_manager
 
 
-    def get_average_temperature(self, city_id: int, date: int):
+    def get_average_temperature(self, city_id: int, year: int):
         """
         Fetch the average temperature for a specific city and year.
         :param city_id: The city_id to query.
         :param year: The year to query.
         :return: Average temperature or empty list if no data is available.
         """
+        self.logger.debug(f"Fetching average temperature for city_id: {city_id}, date= {year}")
         query = f"""
         SELECT {MEAN_TEMP}
         FROM {DAILY_WEATHER_TBL}
-        WHERE {CITY_ID} = ? and {DATE} = ?
+        WHERE {CITY_ID} = ? and {DATE} BETWEEN ? AND ?
         """
-        result = self.db_manager.execute_query(query, (city_id, date))
+        start_date = f"{year}{START_OF_YEAR}"
+        end_date = f"{year}{END_OF_YEAR}"
+        self.logger.debug(f"Fetching average temperature for city_id: {city_id}, year: {year}")
+        result = self.db_manager.execute_query(query, (city_id, start_date, end_date))
+        self.logger.debug(f"Query result: {result}")
         return result [0][0] if result else []
 
 
@@ -40,12 +47,14 @@ class SQLiteQuery(DatabaseQueryInterface):
         :param year: The year to query.
         :return: Total precipitation or empty list if no data is available.
         """
+        self.logger.debug(f"Fetching average temperature for city: {city}, year= {year}")
         query = f"""
         SELECT SUM({PRECIP})
         FROM {DAILY_WEATHER_TBL}
         WHERE {CITY} = ? and {YEAR} = ?
         """
         result = self.db_manager.execute_query(query, (city, year))
+        self.logger.debug(f"Query result: {result}")
         return result[0][0] if result else []
 
 
@@ -78,9 +87,10 @@ class SQLiteQuery(DatabaseQueryInterface):
             WHERE {CITY_ID} = ? AND {DATE} BETWEEN ? AND ?
             """
             results = self.db_manager.execute_query(query, (city_id, start_date_db_format, end_date))
+            self.logger.debug(f"Query result: {results}")
             return results[0][0] if results else None
         except Exception as e:
-            print(f"Error while processing dates: {e}")
+            self.logger.warning(f"Error while processing dates: {e}")
             return None
 
 
@@ -92,6 +102,7 @@ class SQLiteQuery(DatabaseQueryInterface):
         :param end_date: The end date for the query
         :return: Average mean temp or empty list if no data is available.
         """
+        # TODO: Add logger 
         query = f"""
         SELECT AVG({MEAN_TEMP})
         FROM {DAILY_WEATHER_TBL}
@@ -108,8 +119,9 @@ class SQLiteQuery(DatabaseQueryInterface):
         :param start_date: The year to query
         :return: Average annual precipitation or empty list if no data is available.
         """
-        start_date = START_OF_YEAR + year
-        end_date = END_OF_YEAR + year
+        # TODO: Add logger 
+        start_date = f"{year}-01-01"
+        end_date = f"{year}-12-31"
         query = f"""
         SELECT SUM({PRECIP})
         FROM {DAILY_WEATHER_TBL}
