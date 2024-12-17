@@ -28,12 +28,8 @@ from graph_handler import GraphHandler
 # TODO: Test doc strings work e.g. print(method/class.__doc__)
 # TODO: Write some integration tests
 # TODO: Check all imports
-# TODO: User date inputs must be historic i.e. no future dates
-# TODO: Check menu option 3, annual temp
-# TODO: Check menu option 4
-# TODO: Add formatting to 2 decimals back in output handler
 # TODO: add data seperator - to constants
-
+# TODO: Add DocString to database_query_interface
 
 # Register handlers dynamically
 OutputHandlerRegistry.register_handler("console", OutputHandler.handle_console)
@@ -47,12 +43,22 @@ logging.basicConfig(
         logging.StreamHandler() #output to console
     ]
 )
+logging.getLogger('matplotlib').setLevel(logging.WARNING)
 
 class WeatherDataApplication:
     """
     Main application class for the Weather Data Application.
 
-    This class initializes the application, handles user interaction, and manages database queries.
+    This class handles user interaction through a menu-driven interface, executes 
+    database queries via the `SQLiteQuery` class, and displays results using the 
+    `OutputHandler`.
+
+    Attributes
+    ----------
+    db_manager : DatabaseManager
+        Manages the SQLite database connection and queries.
+    query_instance : SQLiteQuery
+        Performs predefined weather-related queries on the database.
     """
 
     def __init__(self, db_path: str):
@@ -76,29 +82,45 @@ class WeatherDataApplication:
 
         Parameters
         ----------
-        results : list
-            Query results from the database.
+        results : list, float, or None
+            Query results from the database. Can be a list of rows, a numeric value, or None.
 
         Returns
         -------
         bool
-            True if results are valid, False otherwise. Prints an error message if results are empty.
-        """
-        self.logger.debug(f"Validating results: {results}")
+            True if results are valid and contain data; otherwise, False.
 
-        if not results:
+        Notes
+        -----
+        - Numeric results are displayed directly.
+        - Lists are checked to ensure they are iterable and contain valid rows.
+        """
+        # self.logger.debug(f"Validating results: {results}")
+
+        if results is None:
             self.logger.warning(f"No data available.")
-            print("Returning to the main menu...")
+            print("No data found. Returning to the main menu...")
             return False
 
+        # Handle numeric results
+        if isinstance(results, (int, float)):
+            OutputHandler._display_single_result(results)
+            return True
+        
         # Check if results are iterable and if rows are accessible
         if isinstance(results, list):
             if all(isinstance(row, sqlite3.Row) for row in results):
                 return True
-        
-        self.logger.error(f"Invalid data format in results")
-        print("Invalid data format. Returning to the main menu...")
-        return False
+
+        # print results to console
+        if results:
+            OutputHandler.handle_console(results)
+            return True
+
+        else:
+            self.logger.error(f"Invalid data format in results")
+            print("Invalid data format. Returning to the main menu...")
+            return False
 
 
     def run(self):
@@ -157,12 +179,12 @@ class WeatherDataApplication:
 
     def get_display_choice(self):
         """
-        Display a submenu for choosing how to visualize the data.
+        Prompt the user to choose a display format for query results.
 
         Returns
         -------
-        str
-            The user's choice of display type.
+        int
+            The user's chosen display format (e.g., 1 for console, 2 for bar chart).
         """
         print("How would you like to display the data?")
         print("1. Console (text-based)")
@@ -175,7 +197,9 @@ class WeatherDataApplication:
 
     def select_all_countries(self):
         """
-        Query the database and display all the countries 
+        Retrieve and display all countries from the database.
+
+        Queries the `countries` table and presents the results in a user-specified format.
         """
         query = SELECT_FROM + COUNTRIES_TBL
         results = self.db_manager.execute_query(query=query)
@@ -184,13 +208,14 @@ class WeatherDataApplication:
             return
 
         choice = self.get_display_choice()
-        # TODO: Change these string literals to constants
         OutputHandler.handle_output(choice, results, title=TITLE_COUNTRIES, xlabel=X_LABEL_COUNTRIES, ylabel=Y_LABEL_COUNTRY_ID)
 
 
     def select_all_cities(self):
         """
-        Query the database and display all cities 
+        Retrieve and display all cities from the database.
+
+        Queries the `cities` table and presents the results in a user-specified format.
         """
         query = SELECT_FROM + CITIES_TBL
         results = self.db_manager.execute_query(query=query)
@@ -204,12 +229,16 @@ class WeatherDataApplication:
 
     def average_annual_temperature(self):
         """
-        Calculate and display the average annual temperature for a specified city and year.
+        Retrieve and display the average annual temperature for a city in a given year.
+
+        Prompts the user to input a city ID and year, then queries the database for
+        the average temperature and displays the result.
         """
         city_id = InputHandler.get_integer_input("Enter city ID: ")
         year = InputHandler.get_year_input("Enter year as YYYY: ")
         result = self.query_instance.get_average_temperature(city_id=city_id, year=year)
 
+        # self.logger.debug(f"results: {result}")
         if not self.validate_results([result]):
             return
 
@@ -219,18 +248,16 @@ class WeatherDataApplication:
 
     def average_seven_day_precipitation(self):
         """
-        Calculate and display the seven-day precipitation total for a specified city and date range.
+        Retrieve and display the average precipitation over a seven-day period for a city.
+
+        Prompts the user to input a city ID and start date, then calculates and displays 
+        the average precipitation for the specified range.
         """
         city_id = InputHandler.get_integer_input("Enter city ID: ")
         while True:
             start_date = InputHandler.get_date_input("Enter start date (yyyy-mm-dd): ")
-            parsed_date = datetime.strptime(start_date, "%Y-%m-%d")
-            # TODO: Move this to InputHandler class
-            if parsed_date > datetime.now():
-                print("The start date cannot be in the future. Please try again.")
-                continue
-
             results = self.query_instance.average_seven_day_precipitation(city_id, start_date)
+
             if not self.validate_results(results):
                 return  # Exit gracefully to the main menu
 
@@ -241,7 +268,10 @@ class WeatherDataApplication:
 
     def average_mean_temp_by_city(self):
         """
-        Calculate and display the mean temperature for a city over a specified date range.
+        Retrieve and display the mean temperature for a city over a specified date range.
+
+        Prompts the user for a start date, end date, and city ID, then queries the database 
+        and displays the mean temperature result.
         """
         date_from = InputHandler.get_date_input("Enter start date: ")
         date_to = InputHandler.get_date_input("Enter end date: ")
@@ -257,16 +287,18 @@ class WeatherDataApplication:
 
     def average_annual_precipitation_by_country(self):
         """
-        Calculate and display the average annual precipitation for a country in a specified year.
+        Retrieve and display the annual precipitation for all cities in a given country.
+
+        Prompts the user to input a year and country ID, then sums the precipitation for
+        all cities in that country and displays the result.
         """
         year = InputHandler.get_year_input("Enter year as YYYY: ")
-        # TODO: This should be for a country not city
         country_id = InputHandler.get_integer_input("Enter country ID: ")
         results = self.query_instance.average_annual_preciption_by_country(country_id, year)
 
         if not self.validate_results([results]):
             return
-        
+
         choice = self.get_display_choice()
         OutputHandler.handle_output(choice, results, title=TITLE_ANNUAL_PRECIP, xlabel=X_LABEL_PRECIPITATION, ylabel=Y_LABEL_PRECIPITATION)
 
@@ -275,6 +307,6 @@ if __name__ == "__main__":
     # Create a SQLite3 connection and call the various functions
     # above, printing the results to the terminal.
     # Initialize DatabaseManager and SQLiteQuery
-    DB_PATH = "db\CIS4044-N-SDI-OPENMETEO-PARTIAL.db"
+    DB_PATH = r"db\CIS4044-N-SDI-OPENMETEO-PARTIAL.db"
     app = WeatherDataApplication(DB_PATH)
     app.run()

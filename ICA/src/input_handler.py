@@ -3,7 +3,8 @@ Module for handling user input validation.
 
 This module provides utility methods for validating and retrieving user input.
 """
-import datetime
+from datetime import datetime
+import logging
 
 
 class InputHandler:
@@ -101,8 +102,12 @@ class InputHandler:
         while True:
             user_input = input(prompt)
             try:
+                date = datetime.strptime(user_input, "%Y-%m-%d")
                 # Parse the input string to validate it as a date
-                datetime.datetime.strptime(user_input, "%Y-%m-%d")
+                if date > datetime.now():
+                    print("The start date cannot be in the future. Please try again.")
+                    continue
                 return user_input
             except ValueError:
+                logging.warning("User entered an invalid date.")
                 print("Invalid input. Please enter a date in the format yyyy-mm-dd (e.g., 2021-01-01).")

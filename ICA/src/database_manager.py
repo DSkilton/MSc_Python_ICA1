@@ -57,7 +57,7 @@ class DatabaseManager:
         sqlite3.OperationalError
             If the query is invalid or fails to execute.
         """
-        self.logger.debug(f"Executing Query: {query} | Params: {params}")
+        self.logger.debug(f"DB MAN - Executing Query: {query} | Params: {params}")
 
         if params is None:
             params = ()
@@ -67,11 +67,10 @@ class DatabaseManager:
             cursor.row_factory = sqlite3.Row
             cursor.execute(query, params)
             results = cursor.fetchall()
-            self.logger.debug(f"Query Results: {results}")
             return results
         except sqlite3.OperationalError as e:
             self.logger.error(f"Database query failed: {e}")
-            raise
+            return []
 
 
     def close_connection(self):

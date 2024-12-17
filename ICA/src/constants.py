@@ -22,6 +22,7 @@ CITIES_TBL = "cities"
 # table fields
 CITY = "city"
 CITY_ID = "city_id"
+COUNTRY_ID = "country_id"
 PRECIP = "precipitation"
 TEMP = "temperature"
 DATE = "date"
