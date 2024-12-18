@@ -3,6 +3,10 @@ import logging
 from output_handler_registry import OutputHandlerRegistry
 
 class OutputHandler:
+    """
+    Provides methods to display results in the console.
+    """
+
     @staticmethod
     def handle_output(choice, results, title=None, xlabel=None, ylabel=None):
         """

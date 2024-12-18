@@ -1,10 +1,8 @@
 """
 This module defines constants used across the Weather Data Application.
 
-Constants include:
-- Date strings for the start and end of the year.
-- SQL query components for database interactions.
-- Table names and field names for the SQLite database.
+Defines constants used across the Weather Data Application. This module provides 
+a single location for managing constants, ensuring consistency and reducing duplication.
 """
 
 # Date

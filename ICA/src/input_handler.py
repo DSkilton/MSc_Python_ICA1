@@ -1,7 +1,8 @@
 """
 Module for handling user input validation.
 
-This module provides utility methods for validating and retrieving user input.
+This module provides methods for user input validation. It ensures all inputs
+are valid before being passed to other parts of the application.
 """
 from datetime import datetime
 import logging
@@ -10,15 +11,6 @@ import logging
 class InputHandler:
     """
     A utility class for handling and validating user input.
-
-    Methods
-    -------
-    get_integer_input(prompt: str) -> int
-        Prompt the user for an integer input and validate the input.
-    get_year_input(prompt: str) -> str
-        Prompt the user for a year input and validate it as a four-digit year.
-    get_date_input(prompt: str) -> str
-        Prompt the user for a date input and validate it in the format yyyy-mm-dd.
     """
 
 

@@ -1,9 +1,39 @@
 import matplotlib.pyplot as plt
 
-class GraphHandler:
+class GraphOutputHandler:
     """
     Handles graph plotting for various data visualization types.
     """
+
+    @staticmethod
+    def handle_graph(choice, labels, values, title, xlabel=None, ylabel=None):
+        """
+        Routes the graph display based on user choice.
+
+        Parameters
+        ----------
+        choice : str
+            The type of graph to display ("bar_chart", "pie_chart", etc.).
+        labels : list[str]
+            A list of labels for the x-axis.
+        values : list[int]
+            A list of numerical values for the y-axis.
+        title : str
+            The title of the chart.
+        xlabel : str, optional
+            The label for the x-axis.
+        ylabel : str, optional
+            The label for the y-axis.
+        """
+        if choice == "bar_chart":
+            GraphOutputHandler.plot_bar(labels, values, title, xlabel, ylabel)
+        elif choice == "pie_chart":
+            GraphOutputHandler.plot_pie(values, labels, title)
+        elif choice == "scatter_plot":
+            GraphOutputHandler.plot_scatter(labels, values, title, xlabel, ylabel)
+        else:
+            print(f"Graph type '{choice}' is not supported.")
+        
 
     @staticmethod
     def plot_bar(labels: list[str], values: list[int], title: str, xlabel: str, ylabel: str):

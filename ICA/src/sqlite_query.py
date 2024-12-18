@@ -24,6 +24,34 @@ class SQLiteQuery(DatabaseQueryInterface):
         self.db_manager = db_manager
 
 
+    def get_all_countries(self):
+        """
+        Retrieve all countries from the database.
+
+        Returns
+        -------
+        list[dict]
+            A list of dictionaries representing all countries.
+        """
+        query = f"SELECT * FROM {COUNTRIES_TBL}"
+        results = self.db_manager.execute_query(query)
+        return results
+    
+
+    def get_all_cities(self):
+        """
+        Retrieve all cities from the database.
+
+        Returns
+        -------
+        list[dict]
+            A list of dictionaries representing all cities.
+        """
+        query = f"SELECT * FROM {CITIES_TBL}"
+        results = self.db_manager.execute_query(query)
+        return results
+
+
     def get_average_temperature(self, city_id: int, year: int):
         """
         Retrieve the average temperature for a specified city and year.
@@ -98,9 +126,8 @@ class SQLiteQuery(DatabaseQueryInterface):
             The average precipitation over the seven-day period, or None if no data is available.
         """
         try:
-            parsed_date = datetime.strptime(start_date, "%Y-%m-%d")
-            start_date_db_format = parsed_date.strftime("%Y-%m-%d")
-            end_date = (parsed_date + timedelta(days=6)).strftime("%Y-%m-%d")  # Add 6 days
+            start_date_obj = datetime.strptime(start_date, "%Y-%m-%d")
+            end_date = (start_date_obj + timedelta(days=6)).strftime("%Y-%m-%d")
 
             # Query database
             query = f"""
@@ -108,7 +135,7 @@ class SQLiteQuery(DatabaseQueryInterface):
             FROM {DAILY_WEATHER_TBL}
             WHERE {CITY_ID} = ? AND {DATE} BETWEEN ? AND ?
             """
-            results = self.db_manager.execute_query(query, (city_id, start_date_db_format, end_date))
+            results = self.db_manager.execute_query(query, (city_id, start_date, end_date))
             if results and len(results) > 0 and results[0][0] is not None:
                 return results[0][0]
             return None
@@ -135,7 +162,6 @@ class SQLiteQuery(DatabaseQueryInterface):
         float or None
             The mean temperature over the specified date range, or None if no data is available.
         """
-        # TODO: Add logger
         query = f"""
         SELECT AVG({MEAN_TEMP})
         FROM {DAILY_WEATHER_TBL}
@@ -163,8 +189,8 @@ class SQLiteQuery(DatabaseQueryInterface):
         float or None
             Total precipitation for the specified country and year, or None if no data is available.
         """
-        start_date = f"{year}-01-01"
-        end_date = f"{year}-12-31"
+        start_date = f"{year}{START_OF_YEAR}"
+        end_date = f"{year}{END_OF_YEAR}"
         query = f"""
         SELECT SUM({PRECIP})
         FROM {DAILY_WEATHER_TBL}
