@@ -13,6 +13,7 @@ class InputHandler:
     A utility class for handling and validating user input.
     """
 
+    logger = logging.getLogger(__name__)
 
     @staticmethod
     def get_integer_input(prompt: str) -> int:
@@ -36,9 +37,14 @@ class InputHandler:
         """
         while True:
             try:
-                return int(input(prompt))
+                choice = int(input(prompt))
+                if choice < 0:
+                    InputHandler.logger.warning(f"Invalid input: {choice}. It must be a positive integer.")
+                    raise ValueError("Input must be a positive integer.")
+                return choice
             except ValueError:
-                print("Invalid input. Please enter a valid integer")
+                InputHandler.logger.warning(f"User entered invalid input. Prompt: {prompt}")
+                print("Invalid input. Please enter a valid number.")
 
 
     @staticmethod
@@ -52,7 +58,7 @@ class InputHandler:
             The prompt message to display to the user.
 
         Returns
-        -------
+        -------st
         str
             The validated year input as a four-character string.
 
@@ -99,7 +105,27 @@ class InputHandler:
                 if date > datetime.now():
                     print("The start date cannot be in the future. Please try again.")
                     continue
-                return user_input
+                return date.strftime("%Y-%m-%d")
             except ValueError:
-                logging.warning("User entered an invalid date.")
+                InputHandler.logging.warning("User entered an invalid date.")
                 print("Invalid input. Please enter a date in the format yyyy-mm-dd (e.g., 2021-01-01).")
+
+
+    @staticmethod
+    def get_latitude_longitude(prompt: str) -> float:
+        """
+        Validate latitude or longitude input ensuring it falls within acceptable ranges.
+        Latitude: -90 to 90
+        Longitude: -180 to 180
+        """
+        while True:
+            try:
+                value = float(input(prompt))
+                if 'latitude' in prompt.lower() and -90 <= value <= 90:
+                    return value
+                elif 'longitude' in prompt.lower() and -180 <= value <= 180:
+                    return value
+                else:
+                    print("Invalid range. Latitude must be -90 to 90, and Longitude must be -180 to 180.")
+            except ValueError:
+                print("Invalid input. Please enter a numeric value.")

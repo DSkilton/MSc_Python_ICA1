@@ -1,204 +1,292 @@
-import logging 
+import logging
 from datetime import datetime, timedelta
-from database_manager import DatabaseManager
-from constants import *
+from sqlalchemy.orm import Session
+from sqlalchemy import func
+from sqlalchemy import exists
+from models.daily_weather_entry import DailyWeatherEntry
+from models.city import City
+from models.country import Country
 from database_query_interface import DatabaseQueryInterface
 
 
-# TODO: Add doc string at class level and method level
-
 class SQLiteQuery(DatabaseQueryInterface):
     """
-    Handles predefined queries for weather-related data from an SQLite database.
-
-    This class implements the `DatabaseQueryInterface` and provides methods for 
-    fetching temperature, precipitation, and other aggregated weather data.
+    Handles predefined queries for weather-related data from an SQLAlchemy database.
+    Implements DatabaseQueryInterface.
     """
 
-    def __init__(self, db_manager):
+    def __init__(self, session: Session):
         """
-        Initialize the SQLiteQuery class with a DatabaseManager instance.
-        :param db_manager: Instance of DatabaseManager to handle SQLite connections.
+        Initialize SQLiteQuery with a database session.
+
+        Parameters
+        ----------
+        session : Session
+            SQLAlchemy session for database interactions.
         """
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.db_manager = db_manager
+        self.session = session
 
 
     def get_all_countries(self):
         """
-        Retrieve all countries from the database.
+        Retrieve all countries.
 
         Returns
         -------
-        list[dict]
-            A list of dictionaries representing all countries.
+        list[Country]
+            All countries as SQLAlchemy objects.
         """
-        query = f"SELECT * FROM {COUNTRIES_TBL}"
-        results = self.db_manager.execute_query(query)
-        return results
-    
+        return self.session.query(Country).all()
+
+
+    def get_country_by_name(self, country_name):
+        """
+        Fetch a country by name.
+
+        Parameters
+        ----------
+        country_name : str
+            The country name.
+
+        Returns
+        -------
+        Country or None
+        """
+        return self.session.query(Country).filter(Country.name == country_name).first()
+
+
+    def get_country_by_id(self, country_name):
+        """
+        Fetch a country by name.
+
+        Parameters
+        ----------
+        country_name : str
+            The country name.
+
+        Returns
+        -------
+        Country or None
+        """
+        return self.session.query(Country).filter(Country.name == country_name).first()
+
 
     def get_all_cities(self):
         """
-        Retrieve all cities from the database.
+        Retrieve all cities.
 
         Returns
         -------
-        list[dict]
-            A list of dictionaries representing all cities.
+        list[City]
         """
-        query = f"SELECT * FROM {CITIES_TBL}"
-        results = self.db_manager.execute_query(query)
-        return results
+        return self.session.query(City).all()
 
 
     def get_average_temperature(self, city_id: int, year: int):
         """
-        Retrieve the average temperature for a specified city and year.
+        Calculate average temperature for a city in a given year.
 
         Parameters
         ----------
         city_id : int
-            The ID of the city to query.
+            City ID.
         year : int
-            The year for which to fetch average temperature data.
+            Year.
 
         Returns
         -------
         float or None
-            The average temperature for the specified city and year, or None if no data is available.
         """
-        query = f"""
-        SELECT {MEAN_TEMP}
-        FROM {DAILY_WEATHER_TBL}
-        WHERE {CITY_ID} = ? and {DATE} BETWEEN ? AND ?
-        """
-        start_date = f"{year}{START_OF_YEAR}"
-        end_date = f"{year}{END_OF_YEAR}"
-        self.logger.debug(f"SQLite Query - Fetching average temperature for city_id: {city_id}, year: {year}")
-        
-        result = self.db_manager.execute_query(query, (city_id, start_date, end_date))
-        # self.logger.debug(f"Query result: {result}")
-        return result [0][0] if result else []
+        start_date = datetime(year, 1, 1)
+        end_date = datetime(year, 12, 31)
+
+        avg_temp = (
+            self.session.query(func.avg(DailyWeatherEntry.mean_temp))
+            .filter(DailyWeatherEntry.city_id == city_id)
+            .filter(DailyWeatherEntry.date.between(start_date, end_date))
+            .scalar()
+        )
+        if avg_temp is None:
+            self.logger.warning(f"No average temperature found for city {city_id} in year {year}.")
+        else: 
+            self.logger.info(f"Average temperature: {avg_temp} found for city {city_id} in year {year}.")
+        return avg_temp
 
 
-    def get_precipitation_data(self, city: str, year: int):
+    def get_precipitation_data(self, city_id: int, year: int):
         """
-        Retrieve the total precipitation for a specified city and year.
+        Calculate total precipitation for a city in a given year.
 
         Parameters
         ----------
-        city : str
-            The name of the city to query.
+        city_id : int
+            City ID.
         year : int
-            The year for which to fetch total precipitation data.
+            Year.
 
         Returns
         -------
         float or None
-            Total precipitation for the specified city and year, or None if no data is available.
         """
-        self.logger.debug(f"SQLite Query - Fetching average temperature for city: {city}, year= {year}")
-        query = f"""
-        SELECT SUM({PRECIP})
-        FROM {DAILY_WEATHER_TBL}
-        WHERE {CITY_ID} = ? and {YEAR} = ?
-        """
-        result = self.db_manager.execute_query(query, (city, year))
-        # self.logger.debug(f"Query result: {result}")
-        return result[0][0] if result else []
+        start_date = datetime(year, 1, 1)
+        end_date = datetime(year, 12, 31)
+
+        total_precip = (
+            self.session.query(func.sum(DailyWeatherEntry.precipitation))
+            .filter(DailyWeatherEntry.city_id == city_id)
+            .filter(DailyWeatherEntry.date.between(start_date, end_date))
+            .scalar()
+        )
+        return total_precip
 
 
     def average_seven_day_precipitation(self, city_id, start_date):
         """
-        Retrieve the average precipitation over a seven-day period for a specified city.
+        Calculate average precipitation over seven days.
 
         Parameters
         ----------
         city_id : int
-            The ID of the city to query.
+            City ID.
         start_date : str
-            The start date of the seven-day period (format: yyyy-mm-dd).
+            Start date.
 
         Returns
         -------
         float or None
-            The average precipitation over the seven-day period, or None if no data is available.
         """
-        try:
-            start_date_obj = datetime.strptime(start_date, "%Y-%m-%d")
-            end_date = (start_date_obj + timedelta(days=6)).strftime("%Y-%m-%d")
+        start_date = datetime.strptime(start_date, "%Y-%m-%d")
+        end_date = start_date + timedelta(days=6)
 
-            # Query database
-            query = f"""
-            SELECT AVG({PRECIP})
-            FROM {DAILY_WEATHER_TBL}
-            WHERE {CITY_ID} = ? AND {DATE} BETWEEN ? AND ?
-            """
-            results = self.db_manager.execute_query(query, (city_id, start_date, end_date))
-            if results and len(results) > 0 and results[0][0] is not None:
-                return results[0][0]
-            return None
-        except Exception as e:
-            self.logger.warning(f"Error while processing dates: {e}")
-            return None
+        avg_precip = (
+            self.session.query(func.avg(DailyWeatherEntry.precipitation))
+            .filter(DailyWeatherEntry.city_id == city_id)
+            .filter(DailyWeatherEntry.date.between(start_date, end_date))
+            .scalar()
+        )
+        return avg_precip
 
 
     def average_mean_temp_by_city(self, city_id, start_date, end_date):
         """
-        Retrieve the mean temperature for a city within a specified date range.
+        Calculate mean temperature for a city between two dates.
 
         Parameters
         ----------
         city_id : int
-            The ID of the city to query.
+            City ID.
         start_date : str
-            The start date of the range (format: yyyy-mm-dd).
+            Start date.
         end_date : str
-            The end date of the range (format: yyyy-mm-dd).
+            End date.
 
         Returns
         -------
         float or None
-            The mean temperature over the specified date range, or None if no data is available.
         """
-        query = f"""
-        SELECT AVG({MEAN_TEMP})
-        FROM {DAILY_WEATHER_TBL}
-        WHERE {CITY_ID} = ? AND {DATE} BETWEEN ? AND ?
-        """
-        results = self.db_manager.execute_query(query, (city_id, start_date, end_date))
-        if results and len(results) > 0 and results[0][0] is not None:
-            return results[0][0]
-        return None
+        start_date = datetime.strptime(start_date, "%Y-%m-%d")
+        end_date = datetime.strptime(end_date, "%Y-%m-%d")
+
+        avg_temp = (
+            self.session.query(func.avg(DailyWeatherEntry.mean_temp))
+            .filter(DailyWeatherEntry.city_id == city_id)
+            .filter(DailyWeatherEntry.date.between(start_date, end_date))
+            .scalar()
+        )
+        return avg_temp
 
 
-    def average_annual_preciption_by_country(self, country_id, year):
+    def average_annual_precipitation_by_country(self, country_id, year):
         """
-        Retrieve the total annual precipitation for all cities in a specified country and year.
+        Calculate total precipitation for a country in a year.
 
         Parameters
         ----------
         country_id : int
-            The ID of the country to query.
+            Country ID.
         year : int
-            The year for which to fetch precipitation data.
+            Year.
 
         Returns
         -------
         float or None
-            Total precipitation for the specified country and year, or None if no data is available.
         """
-        start_date = f"{year}{START_OF_YEAR}"
-        end_date = f"{year}{END_OF_YEAR}"
-        query = f"""
-        SELECT SUM({PRECIP})
-        FROM {DAILY_WEATHER_TBL}
-        JOIN {CITIES_TBL} ON {DAILY_WEATHER_TBL}.{CITY_ID} = {CITIES_TBL}.id
-        WHERE {CITIES_TBL}.{COUNTRY_ID} = ? AND {DAILY_WEATHER_TBL}.{DATE} BETWEEN ? AND ?;
+        start_date = datetime(year, 1, 1)
+        end_date = datetime(year, 12, 31)
+
+        total_precip = (
+            self.session.query(func.sum(DailyWeatherEntry.precipitation))
+            .join(City, City.id == DailyWeatherEntry.city_id)
+            .filter(City.country_id == country_id)
+            .filter(DailyWeatherEntry.date.between(start_date, end_date))
+            .scalar()
+        )
+        return total_precip
+
+
+    def does_city_exist(self, city_name: str):
         """
-        results = self.db_manager.execute_query(query, (country_id, start_date, end_date))
-        self.logger.debug(f"Country ID: {country_id}, Start Date: {start_date}, End Date: {end_date}")
-        if results and len(results) > 0 and results[0][0] is not None:
-            return results[0][0]
-        return None
+        Check if a city exists in the database by its name using SQLAlchemy.
+
+        Parameters
+        ----------
+        city_name : str
+            The name of the city.
+        session : Session
+            The SQLAlchemy session.
+
+        Returns
+        -------
+        bool
+            True if the city exists, False otherwise.
+        """
+        exists_query = self.session.query(exists().where(City.name == city_name))
+        return self.session.query(exists_query).scalar()
+
+
+    def get_country_id_by_name(self, country_name: str):
+        """
+        Retrieve the country ID based on the country name using SQLAlchemy.
+
+        Parameters
+        ----------
+        country_name : str
+            The name of the country.
+        session : Session
+            The SQLAlchemy session.
+
+        Returns
+        -------
+        int or None
+            The ID of the country, or None if not found.
+        """
+        country = self.session.query(Country).filter(Country.name == country_name).first()
+        return country.id if country else None
+
+
+    def insert_city(self, city_data: dict):
+        """
+        Insert a new city into the database using SQLAlchemy.
+
+        Parameters
+        ----------
+        city_data : dict
+            Dictionary containing city information (name, latitude, longitude, country, timezone).
+        """
+        country_id = self.get_country_id_by_name(city_data['country'])
+        if country_id is None:
+            raise ValueError(f"Country '{city_data['country']}' not found in the database.")
+
+        new_city = City(
+            name=city_data['name'],
+            latitude=city_data['latitude'],
+            longitude=city_data['longitude'],
+            country_id=country_id,
+            timezone=city_data['timezone']
+        )
+
+        self.session.add(new_city)
+        self.session.commit()
+        self.session.refresh(new_city)
+        return new_city

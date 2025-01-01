@@ -47,7 +47,7 @@ MENU_EXIT = 0
 TITLE_COUNTRIES = "Countries"
 TITLE_CITIES = "Cities"
 TITLE_AVG_TEMP = "Average Temperature"
-TITLE_7DAY_PRECIP = "Seven-Day Precipitation"
+TITLE_7DAY_PRECIP = "Average Seven-Day Precipitation"
 TITLE_MEAN_TEMP_CITY = "Mean Temperature by City"
 TITLE_ANNUAL_PRECIP = "Annual Precipitation by Country"
 
@@ -63,3 +63,20 @@ Y_LABEL_COUNTRY_ID = "Country Id"
 Y_LABEL_CITY_ID = "City Id"
 Y_LABEL_TEMPERATURE = "Temperature (°C)"
 Y_LABEL_PRECIPITATION = "Precipitation (mm)"
+
+ATTEMPT = "attempt"
+NAME = "name"
+LATITUDE = "latitude"
+LONGITUDE = "longitude"
+COUNTRY = "country"
+TIMEZONE = "timezone"
+
+START_DATE = "start_date"
+END_DATE = "end_date"
+DAILY = "daily"
+
+TEMPERATURE_2M_MAX = "temperature_2m_max"
+TEMPERATURE_2M_MIN = "temperature_2m_min"
+PRECIPITATION_SUM = "precipitation_sum"
+
+ID = "id"

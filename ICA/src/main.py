@@ -8,30 +8,43 @@ This module initializes and runs the WeatherDataApplication.
 # Student ID: <S6310391>
 
 import logging
-from database_manager import DatabaseManager
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from os.path import abspath
+from initialise_db import initialise_db
+from session_manager import SessionManager
 from output_handler_registry import OutputHandlerRegistry
 from console_output_handler import ConsoleOutputHandler
 from graph_output_handler import GraphOutputHandler
+from weather_api_service import WeatherApiService
 from sqlite_query import SQLiteQuery
 from menu_handler import MenuHandler
+from database_manager import DatabaseManager
 
 # TODO: Write tests for docstrings
 # TODO: Write some integration tests
 # TODO: Check all imports
+# TODO: Sort SQL Queries out!!
+# TODO: Sort automated testswa
+# TODO: Longitude and Latitude shouldn't be 2 decimal places 🤦🏼‍♂️
 
 # Register handlers dynamically
 OutputHandlerRegistry.register_handler("console", ConsoleOutputHandler.handle_console)
 OutputHandlerRegistry.register_handler("bar_chart", GraphOutputHandler.plot_bar)
 OutputHandlerRegistry.register_handler("pie_chart", GraphOutputHandler.plot_pie)
+# OutputHandlerRegistry.register_handler("scatter_plot", GraphOutputHandler.plot_scatter)
+# OutputHandlerRegistry.register_handler("line_chart", GraphOutputHandler.plot_line)
 
+# Configure logging
 logging.basicConfig(
-    level=logging.DEBUG, 
+    level=logging.DEBUG,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.StreamHandler() # Output to console
+        logging.StreamHandler()  # Output to console
     ]
 )
-logging.getLogger('matplotlib').setLevel(logging.WARNING) # Changed log level because console was cluttered
+logger = logging.getLogger(__name__)
+logging.getLogger('matplotlib').setLevel(logging.WARNING)
 
 class WeatherDataApplication:
     """
@@ -53,9 +66,20 @@ class WeatherDataApplication:
             The path to the SQLite database file.
         """
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.db_manager = DatabaseManager(db_path)
-        self.query_instance = SQLiteQuery(self.db_manager)
-        self.menu_handler = MenuHandler(self.query_instance, self.db_manager)
+
+        # Initialize SQLAlchemy engine and session
+        abs_db_path = abspath(db_path)
+        engine = create_engine(f"sqlite:///{abs_db_path}")
+        session_factory = sessionmaker(bind=engine)
+        self.session_manager = SessionManager(session_factory)
+
+        initialise_db(db_path)
+
+        self.db_manager = DatabaseManager(engine)
+        self.query_instance = SQLiteQuery(self.session_manager.get_session())
+        self.menu_handler = MenuHandler(self.query_instance, self.db_manager, self.session_manager)
+        self.weather_service = WeatherApiService(session=self.session_manager.get_session())
+
         self.logger.info("WeatherDataApplication initialised")
 
 
@@ -75,11 +99,12 @@ class WeatherDataApplication:
                 self.logger.error(f"An error occurred: {e}")
                 print("An unexpected error occurred. Please try again.")
 
+        # Close session on exit
+        self.session_manager.close_session()
+
 
 if __name__ == "__main__":
-    # Create a SQLite3 connection and call the various functions
-    # above, printing the results to the terminal.
-    # Initialize DatabaseManager and SQLiteQuery
-    DB_PATH = r"db\CIS4044-N-SDI-OPENMETEO-PARTIAL.db"
+    # Initialize database path
+    DB_PATH = "db/CIS4044-N-SDI-OPENMETEO-PARTIAL.db"
     app = WeatherDataApplication(DB_PATH)
     app.run()
