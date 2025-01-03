@@ -14,7 +14,7 @@ class ConsoleOutputHandler:
     logger = logging.getLogger(__name__)
 
     @staticmethod
-    def handle_console(results, **kwargs):
+    def handle_console(results):
         """
         Dynamically chooses the appropriate console display method.
 
@@ -26,7 +26,8 @@ class ConsoleOutputHandler:
             Additional arguments, such as `result_title` for single results.
         """
 
-        ConsoleOutputHandler.logger.info(f"console_output_handler, handle_console results: {results}")
+        ConsoleOutputHandler.logger.info(f"console_output_handler, handle_console results: {results[:10]}")
+        ConsoleOutputHandler.logger.info(f"console_output_handler, handle_console results: {type(results)}")
         # Validate results
         if not results or not isinstance(results, list) or not isinstance(results[0], dict):
             print("No valid data to display.")

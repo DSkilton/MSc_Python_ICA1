@@ -64,14 +64,14 @@ class WeatherApiService(BaseApiService):
 
                 if weather_data.is_valid():
                     # self.logger.debug(f"Weather data: {data['daily']}")
-                    # self.logger.debug(f"Valid weather data received: {weather_data}")
-                    # self.logger.debug(f"weather_api_service, City Id: {city_id}.")
+                    self.logger.debug(f"Valid weather data received: {weather_data}")
+                    self.logger.debug(f"weather_api_service, City Id: {city_id}.")
 
                     daily_weather_entries = weather_data.map_to_daily_weather(city_id)
-                    self.logger.debug(f"Daily weather data: {weather_data}")
+                    self.logger.debug(f"Daily weather data: {daily_weather_entries[:5]}")
                     # self.logger.debug(f"api service, daily_weather_entries: {daily_weather_entries}")
                     self._store_weather_data(daily_weather_entries, city_id)
-                    return weather_data
+                    return daily_weather_entries
                 else:
                     self.logger.error("Invalid weather data received.")
                     raise ValueError("Weather data is invalid or incomplete.")
@@ -97,6 +97,7 @@ class WeatherApiService(BaseApiService):
         city_id : int
             ID of the city associated with the weather data.
         """
+        self.logger.debug("weather_api_service, _store_weather_data")
         try:
             # Add each daily weather entry to the session
             for entry in daily_weather_entries:

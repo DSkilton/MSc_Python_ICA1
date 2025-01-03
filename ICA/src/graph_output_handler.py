@@ -32,7 +32,6 @@ class GraphOutputHandler:
         GraphOutputHandler.logger.info(f"Graph type: {choice}")
         GraphOutputHandler.logger.info(f"Labels: {labels}")
         GraphOutputHandler.logger.info(f"Values: {values}")
-        
 
         if not values or sum([v for v in values if isinstance(v, (int, float))]) == 0:
             GraphOutputHandler.logger.warning("No valid data for graphing.")

@@ -98,19 +98,33 @@ class SQLiteQuery(DatabaseQueryInterface):
         -------
         float or None
         """
-        start_date = datetime(year, 1, 1)
-        end_date = datetime(year, 12, 31)
+        # Log the city_id and year
+        self.logger.debug(f"Received city_id: {city_id} (type: {type(city_id)}), year: {year} (type: {type(year)})")
 
+        # Generate the start and end dates for the given year
+        int_year = int(year)
+        start_date = datetime(int_year, 1, 1)
+        end_date = datetime(int_year, 12, 31)
+
+        # Log the generated start and end dates with their types
+        self.logger.debug(f"Generated start_date: {start_date} (type: {type(start_date)}), end_date: {end_date} (type: {type(end_date)})")
+
+        # Query the database to get the average temperature
         avg_temp = (
             self.session.query(func.avg(DailyWeatherEntry.mean_temp))
             .filter(DailyWeatherEntry.city_id == city_id)
             .filter(DailyWeatherEntry.date.between(start_date, end_date))
             .scalar()
         )
+
+        # Log the result of the query and its type
+        # self.logger.debug(f"Query result avg_temp: {avg_temp} (type: {type(avg_temp)})")
+
+        # Check if the result is None and log accordingly
         if avg_temp is None:
             self.logger.warning(f"No average temperature found for city {city_id} in year {year}.")
-        else: 
-            self.logger.info(f"Average temperature: {avg_temp} found for city {city_id} in year {year}.")
+        else:
+            self.logger.debug(f"Average temperature: {avg_temp} found for city {city_id} in year {year}.")
         return avg_temp
 
 

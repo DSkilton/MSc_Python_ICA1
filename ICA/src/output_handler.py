@@ -36,8 +36,8 @@ class OutputHandler:
             return
 
         results = OutputHandler._standardise_results(results)
-        OutputHandler.logger.debug(f"output_handler, type of result: {type(results)}")
-        OutputHandler.logger.debug(f"Results standardised: {results}")
+        # OutputHandler.logger.debug(f"output_handler, type of result: {type(results)}")
+        # OutputHandler.logger.debug(f"Results standardised: {results}")
 
 
         if not isinstance(results, list):

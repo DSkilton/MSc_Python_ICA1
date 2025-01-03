@@ -37,8 +37,11 @@ class GeocodingApiService(BaseApiService):
             response = self._make_request(params={'name': city_name})
             # self.logger.debug(f"API Response: {response}")
             data = response.get("results", [])
-            # self.logger.debug(f"Data: {data}")
-            if not data:
+
+            if response and response.get("results"):
+                self.logger.info(f"Found {len(response['results'])} results for {city_name}")
+            else:
+                self.logger.error(f"No results found for {city_name}")            
                 raise ValueError(f"No results found for city: {city_name}")
 
             # Handle multiple city results

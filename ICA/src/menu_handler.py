@@ -91,8 +91,6 @@ class MenuHandler:
         Fetch and display all countries from the database.
         """
         results = self.query_instance.get_all_countries()
-        print(f"menu_handler, type of result: {type(results)}")
-        print(f"menu_handler, results: {results}")
         OutputHandler.handle_output(1, results, TITLE_COUNTRIES, X_LABEL_COUNTRIES, Y_LABEL_COUNTRY_ID)
 
 
@@ -117,19 +115,24 @@ class MenuHandler:
         start_date = f"{year}{START_OF_YEAR}"
         end_date = f"{year}{END_OF_YEAR}"
         self.session_manager.log_session_details()
+
         city_data = self.location_manager.ensure_location_in_database(location_name)
         self.session_manager.log_session_details()
 
-        ConsoleOutputHandler.handle_console(f"menu_handler, city_id: {type(city_data)}")
+        if isinstance(city_data, list) and len(city_data) > 0:
+            city_id = city_data[0].id
+        else:
+            city_id = city_data.id
+
+        self.logger.debug(f"menu_handler, after id")
 
         weather_data = self.location_manager.fetch_location_weather_data(city_data, start_date, end_date)
-        ConsoleOutputHandler.handle_console(f"menu_handler, weather_data: {weather_data}")
+        self.logger.debug(f"menu_handler, weather data: {weather_data[:5]}")
 
-        results = self.query_instance.get_average_temperature(city_id=city_data, year=year)
-        ConsoleOutputHandler.handle_console(f"menu_handler, results: {results}")
+        result = self.query_instance.get_average_temperature(city_id=city_id, year=year)
+        # self.logger.debug(f"menu_handler, weather results: {result}")
 
-
-        self.delegate_output(results, title=TITLE_AVG_TEMP, xlabel=X_LABEL_YEAR, ylabel=Y_LABEL_TEMPERATURE)
+        self.delegate_output(result, title=TITLE_AVG_TEMP, xlabel=X_LABEL_YEAR, ylabel=Y_LABEL_TEMPERATURE)
         ConsoleOutputHandler.handle_console(weather_data, result_title="Average Annual Temperature")
 
 
@@ -179,6 +182,7 @@ class MenuHandler:
         ylabel : str
             Label for the y-axis (if applicable).
         """
+        self.logger.debug(f"delegating output")
         print("How would you like to display the data?")
         print("1. Console")
         print("2. Bar Chart")

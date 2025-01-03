@@ -31,6 +31,20 @@ class WeatherData:
         return True
 
 
+    def is_valid_list(self, weather_data_list):
+        """
+        Validate the structure of each item in the weather data list.
+        Returns True if all items are valid, False otherwise.
+        """
+        self.logger.debug(f"weather_day, is_valid_list called for {len(weather_data_list)} items")
+
+        for index, weather_data in enumerate(weather_data_list):
+            if not weather_data.is_valid():
+                self.logger.error(f"Weather data at index {index} is invalid.")
+                return False
+        return True
+
+
     def map_to_daily_weather(self, city_id: int):
         """
         Maps the raw weather data to DailyWeatherEntry objects.
