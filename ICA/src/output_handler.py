@@ -45,7 +45,7 @@ class OutputHandler:
             OutputHandler._display_table(results)
             return
 
-        labels, values = OutputHandler._extract_labels_values(results)
+        labels, values = OutputHandler._extract_labels_values_for_cities_and_countries(results)
         handlers = {
             1: "console",
             2: "bar_chart",
@@ -80,7 +80,7 @@ class OutputHandler:
         results : list[dict]
             The tabular results to display.
         """
-        print(f"output_handler, _display_table: {type(results)}")
+        print(f"output_handler, _display_table: {type(results)}, {results[:5]}")
         if not results or not isinstance(results, list):
             print("No data to display.")
             return
@@ -93,14 +93,25 @@ class OutputHandler:
 
         # Update column widths based on data in rows
         for row in results:
+            OutputHandler.logger.debug(f"output_handler, row: {row}")
             for header in headers:
+                OutputHandler.logger.debug(f"output_handler, header: {header}")
                 value = row.get(header, "")
+                OutputHandler.logger.debug(f"output_handler, value: {value}")
+
                 # Ensure id and country_id are treated as integers
                 if header in {"id", "country_id"} and value is not None:
                     try:
                         value = int(float(value))
+                        OutputHandler.logger.debug(f"Value of type: {type(value)}, {value}")
                     except ValueError:
-                        value = value   
+                        value = value
+
+                # Format numeric values to 2 decimal places (for Temperature)
+                if isinstance(value, (int, float)):
+                    value = round(value, 2)
+                    value = f"{value:.2f}"
+
                 column_widths[header] = max(column_widths[header], len(str(value)))
 
         # Create format string for headers and rows
@@ -128,48 +139,46 @@ class OutputHandler:
 
         Parameters
         ----------
-        results : list[City, Country, DailyWeatherEntry] or float
+        results : list[City, Country, DailyWeatherEntry] or float or dict
             The query results to standardize.
 
         Returns
         -------
         list[dict]
-            A standardized list of dictionaries with formatted numeric values.
+            A standardised list of dictionaries with formatted numeric values.
         """
-        print(f"output_handler, _standardise_results: {type(results)}")
-        
+        OutputHandler.logger.debug(f"Standardising results of type: {type(results)}")
+
+        # If results is a numeric type (int or float), return it as a formatted dictionary
         if isinstance(results, (int, float)):
             return [{"Result": f"{results:.2f}"}]
 
-        if isinstance(results, list):
-            standardized = []
-            for row in results:
-                row_dict = {}
-                
-                # If row is an instance of SQLAlchemy model, convert to dictionary
-                if isinstance(row, City):
-                    row_dict["id"] = row.id
-                    row_dict["name"] = row.name
-                    row_dict["latitude"] = f"{row.latitude:.6f}"
-                    row_dict["longitude"] = f"{row.longitude:.6f}"
-                    row_dict["timezone"] = row.timezone
-                    row_dict["country_id"] = row.country_id
-                    row_dict["country_name"] = row.country.name if row.country else None  # Assuming 'Country' relation is set
-                elif isinstance(row, Country):
-                    row_dict["id"] = row.id
-                    row_dict["name"] = row.name
-                    row_dict["timezone"] = row.timezone
-                elif isinstance(row, DailyWeatherEntry):
-                    row_dict["id"] = row.id
-                    row_dict["date"] = row.date
-                    row_dict["min_temp"] = f"{row.min_temp:.2f}"
-                    row_dict["max_temp"] = f"{row.max_temp:.2f}"
-                    row_dict["mean_temp"] = f"{row.mean_temp:.2f}"
-                    row_dict["precipitation"] = f"{row.precipitation:.2f}"
-                    row_dict["city_id"] = row.city_id
+        # If results is a dictionary (e.g., monthly data)
+        if isinstance(results, dict):
+            OutputHandler.logger.debug("Result is a dictionary")
+            # Convert dictionary into a list of dictionaries, each containing 'Month' and 'Temperature'
+            return [{"Month": month, "Temperature": f"{temp:.2f}"} for month, temp in results.items()]
 
-                standardized.append(row_dict)
-            return standardized
+        # Check if results is a list
+        if isinstance(results, list):
+            standardised = []
+
+            for row in results:
+                # Handle the case where the row is an instance of a model (City, Country, DailyWeatherEntry)
+                if isinstance(row, (City, Country, DailyWeatherEntry)):
+                    if hasattr(row, 'to_dict'):  # Ensure the row has the to_dict method
+                        standardised.append(row.to_dict())
+                    else:
+                        OutputHandler.logger.debug("We have a problem: No to_dict method found.")
+                # If the row is already a dictionary (for example, from the database or API)
+                elif isinstance(row, dict):
+                    OutputHandler.logger.debug("Row is already a dictionary")
+                    standardised.append(row)
+
+            return standardised
+
+        # If results is neither a numeric value nor a dictionary/list, return an empty list
+        OutputHandler.logger.debug("No results to standardise")
         return []
 
 
@@ -187,7 +196,7 @@ class OutputHandler:
 
 
     @staticmethod
-    def _extract_labels_values(results):
+    def _extract_labels_values_for_cities_and_countries(results):
         """
         Extract labels and values for graphs.
 
@@ -201,17 +210,26 @@ class OutputHandler:
         tuple[list, list]
             A tuple containing labels (x-axis) and values (y-axis) for charts.
         """
+
+        OutputHandler.logger.debug(f"extracting labels for results of type: {type(results[0])}, {results[:5]}")
+
         # Handle empty results
         if not results or not isinstance(results[0], dict):
             return ["No data"], [0]
 
         # Dynamically extract keys as labels and values
-        labels = list(results[0].keys())  # Use the dictionary keys as the labels
-        values = [list(row.values()) for row in results]  # Extract the values as the data for plotting
+        labels = list(results[0].keys())
 
-        # Flatten the list of lists (if necessary) and convert all values to floats for graphing
-        values = [float(v) if isinstance(v, (int, float)) else 0 for v in values]
-        
+        if isinstance(results[0], dict) and "Month" in results[0]:
+            # If it's a dictionary with 'Month' and 'Temperature'
+            values = [row["Temperature"] for row in results]
+            labels = [row["Month"] for row in results]
+        else:
+            values = [list(row.values()) for row in results]
+            labels = [list(row.keys()) for row in results]
+
+        OutputHandler.logger.debug(f"output_handler, labels: {labels}, values: {values}, of type: {type(values)}")
+
         return labels, values
 
 
@@ -248,7 +266,7 @@ class OutputHandler:
 
 
     @staticmethod
-    def convert_to_dicts(rows):
+    def sqlite_row_to_dict(rows):
         """
         Converts a list of sqlite3.Row objects to a list of standard dictionaries.
 

@@ -15,6 +15,17 @@ class DailyWeatherEntry(Base):
 
     city = relationship("City", back_populates="weather_entries")
 
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "date": self.date,
+            "min_temp": self.min_temp,
+            "max_temp": self.max_temp,
+            "mean_temp": self.mean_temp,
+            "precipitation": self.precipitation,
+            "city_id": self.city_id,
+        }
+
     def __repr__(self):
         return (f"DailyWeatherEntry(id={self.id}, date='{self.date}', city_id={self.city_id}, "
                 f"temperature_max={self.max_temp}, temperature_min={self.min_temp}, precipitation={self.precipitation})")

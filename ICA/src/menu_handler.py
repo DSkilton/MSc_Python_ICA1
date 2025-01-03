@@ -132,17 +132,39 @@ class MenuHandler:
         result = self.query_instance.get_average_temperature(city_id=city_id, year=year)
         # self.logger.debug(f"menu_handler, weather results: {result}")
 
-        self.delegate_output(result, title=TITLE_AVG_TEMP, xlabel=X_LABEL_YEAR, ylabel=Y_LABEL_TEMPERATURE)
-        ConsoleOutputHandler.handle_console(weather_data, result_title="Average Annual Temperature")
+        monthly_data = self.query_instance.get_monthly_average_temperature(weather_data)
+        self.logger.debug(f"menu_handler, monthly data: {monthly_data} type: {type(monthly_data)}")
+
+        self.delegate_output(monthly_data, title=TITLE_AVG_TEMP, xlabel=X_LABEL_YEAR, ylabel=Y_LABEL_TEMPERATURE)
+        # ConsoleOutputHandler.handle_console(weather_data, result_title="Average Annual Temperature")
 
 
     def average_seven_day_precipitation(self):
         """
         Retrieve and display the average precipitation over a seven-day period for a city.
         """
-        city_id = InputHandler.get_integer_input("Enter city ID: ")
+        # Prompt user for city input
+        city_input = input("Enter city ID or name: ")
+
+        # Determine whether the input is an ID or a name
+        if city_input.isdigit():
+            # Search by city ID
+            city_id = int(city_input)
+        else:
+            # Search by city name
+            city = self.query_instance.get_city_by_name(city_input)
+            if not city:
+                print(f"City '{city_input}' not found.")
+                return
+            city_id = city.id
+
+        # Get the start date
         start_date = InputHandler.get_date_input("Enter start date (yyyy-mm-dd): ")
+
+        # Query the database for the average seven-day precipitation
         results = self.query_instance.average_seven_day_precipitation(city_id, start_date)
+
+        # Display the results
         self.delegate_output(results, title=TITLE_7DAY_PRECIP, xlabel=X_LABEL_CITIES, ylabel=Y_LABEL_PRECIPITATION)
 
 

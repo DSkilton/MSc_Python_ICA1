@@ -16,6 +16,19 @@ class City(Base):
     country = relationship("Country", back_populates="cities")
     weather_entries = relationship('DailyWeatherEntry', back_populates='city', cascade="all, delete-orphan")
 
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "latitude": self.latitude,
+            "longitude": self.longitude,
+            "timezone": self.timezone,
+            "country_id": self.country_id,
+            "country_name": self.country.name if self.country else None,
+        }
+
+
     def __str__(self):
         print("STRING FUNCTION")
         name = self.name if self.name is not None else 'Unknown'

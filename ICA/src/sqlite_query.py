@@ -7,6 +7,8 @@ from models.daily_weather_entry import DailyWeatherEntry
 from models.city import City
 from models.country import Country
 from database_query_interface import DatabaseQueryInterface
+from collections import defaultdict
+
 
 
 class SQLiteQuery(DatabaseQueryInterface):
@@ -304,3 +306,29 @@ class SQLiteQuery(DatabaseQueryInterface):
         self.session.commit()
         self.session.refresh(new_city)
         return new_city
+
+
+    def get_monthly_average_temperature(self, daily_weather_entries):
+        """
+        Calculate the average temperature for each month.
+        
+        Parameters
+        ----------
+        daily_weather_entries : list
+            List of DailyWeatherEntry objects containing daily temperatures and dates.
+        
+        Returns
+        -------
+        dict
+            A dictionary with months as keys and average temperatures as values.
+        """
+        monthly_data = defaultdict(list)
+
+        for entry in daily_weather_entries:
+            month = entry.date.month
+            monthly_data[month].append(entry.mean_temp)
+
+        # Calculate average temperature for each month
+        monthly_avg_temp = {month: sum(temps)/len(temps) for month, temps in monthly_data.items()}
+
+        return monthly_avg_temp

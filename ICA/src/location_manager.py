@@ -258,12 +258,7 @@ class LocationManager:
 
         self.logger.debug(f"location_manager, weather data type {type(weather_data)}")
 
-        # if isinstance(weather_data, list) and all(isinstance(data, WeatherData) and data.is_valid() for data in weather_data):
-        #     self.logger.debug(f"Successfully fetched weather data for {city.name}.")
         return weather_data
-        # else:
-        #     self.logger.error(f"Invalid weather data for city {city.name}.")
-            # return None
 
 
     def process_weather_data(self, weather_data, city):
