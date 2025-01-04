@@ -24,8 +24,8 @@ from database_manager import DatabaseManager
 # TODO: Write tests for docstrings
 # TODO: Write some integration tests
 # TODO: Check all imports
-# TODO: Sort SQL Queries out!!
-# TODO: Sort automated testswa
+# TODO: Sort automated tests
+# TODO: Stop duplicates being saved in db
 # TODO: Longitude and Latitude shouldn't be 2 decimal places 🤦🏼‍♂️
 
 # Register handlers dynamically

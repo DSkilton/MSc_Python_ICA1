@@ -66,14 +66,16 @@ class WeatherData:
                 self.precipitation_sum
         ):
 
+            mean_temp = (temp_max + temp_min) / 2 if temp_max is not None and temp_min is not None else 0
+
             daily_weather_entries.append(
                 DailyWeatherEntry(
                     city_id=city_id,
                     date=datetime.strptime(date, "%Y-%m-%d").date(),
-                    min_temp=temp_min,
-                    max_temp=temp_max,
-                    mean_temp=(temp_max + temp_min) / 2,
-                    precipitation=precip
+                    min_temp=temp_min if temp_min is not None else 0,
+                    max_temp=temp_max if temp_max is not None else 0,
+                    mean_temp=mean_temp,
+                    precipitation=precip if precip is not None else 0
                 )
             )
 

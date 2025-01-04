@@ -30,7 +30,6 @@ class City(Base):
 
 
     def __str__(self):
-        print("STRING FUNCTION")
         name = self.name if self.name is not None else 'Unknown'
         latitude = self.latitude if self.latitude is not None else 'Unknown'
         longitude = self.longitude if self.longitude is not None else 'Unknown'

@@ -107,7 +107,7 @@ class InputHandler:
                     continue
                 return date.strftime("%Y-%m-%d")
             except ValueError:
-                InputHandler.logging.warning("User entered an invalid date.")
+                InputHandler.logger.warning("User entered an invalid date.")
                 print("Invalid input. Please enter a date in the format yyyy-mm-dd (e.g., 2021-01-01).")
 
 

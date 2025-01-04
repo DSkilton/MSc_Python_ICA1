@@ -1,9 +1,10 @@
-import sqlite3
 import logging
+import datetime
 from models.city import City
 from models.country import Country
 from models.daily_weather_entry import DailyWeatherEntry
 from output_handler_registry import OutputHandlerRegistry
+from sqlalchemy.engine.row import Row
 
 class OutputHandler:
     """
@@ -80,7 +81,6 @@ class OutputHandler:
         results : list[dict]
             The tabular results to display.
         """
-        print(f"output_handler, _display_table: {type(results)}, {results[:5]}")
         if not results or not isinstance(results, list):
             print("No data to display.")
             return
@@ -93,22 +93,22 @@ class OutputHandler:
 
         # Update column widths based on data in rows
         for row in results:
-            OutputHandler.logger.debug(f"output_handler, row: {row}")
+            # OutputHandler.logger.debug(f"output_handler, row: {row}")
             for header in headers:
-                OutputHandler.logger.debug(f"output_handler, header: {header}")
+                # OutputHandler.logger.debug(f"output_handler, header: {header}")
                 value = row.get(header, "")
-                OutputHandler.logger.debug(f"output_handler, value: {value}")
+                # OutputHandler.logger.debug(f"output_handler, value: {value}")
 
                 # Ensure id and country_id are treated as integers
                 if header in {"id", "country_id"} and value is not None:
                     try:
                         value = int(float(value))
-                        OutputHandler.logger.debug(f"Value of type: {type(value)}, {value}")
+                        # OutputHandler.logger.debug(f"Value of type: {type(value)}, {value}")
                     except ValueError:
                         value = value
 
-                # Format numeric values to 2 decimal places (for Temperature)
-                if isinstance(value, (int, float)):
+                # Format numeric values to 2 decimal places (for Temperature, Precipitation)
+                if isinstance(value, (int, float)) and header not in {"latitude", "longitude"}:
                     value = round(value, 2)
                     value = f"{value:.2f}"
 
@@ -119,6 +119,7 @@ class OutputHandler:
         separator = "-+-".join("-" * column_widths[header] for header in headers)
 
         # Print the header
+        print()
         print(header_format.format(*headers))
         print(separator)
 
@@ -175,6 +176,28 @@ class OutputHandler:
                     OutputHandler.logger.debug("Row is already a dictionary")
                     standardised.append(row)
 
+                # If the row is a SQLAlchemy Row, convert it to a dictionary
+                if isinstance(row, Row):
+                    try:
+                        # If the row contains only one value (e.g., precipitation)
+                        if len(row) == 1:
+                            OutputHandler.logger.debug(f"Row has only one value (precipitation): {row[0]}")
+                            standardised.append({
+                                "precipitation": round(row[0], 2)
+                            })
+                        else:
+                            # Try converting the Row to a dictionary (assuming it's a 2-tuple like date, precipitation)
+                            now_dict = dict(row)
+                            OutputHandler.logger.debug(f"Alchemy -> dict(row): {now_dict}")
+                            standardised.append(now_dict)
+
+                    except Exception as e:
+                        # Log the error if conversion fails
+                        OutputHandler.logger.error(f"Failed to process Row: {e}")
+                        continue
+                else:
+                    OutputHandler.logger.error(f"Standardising row, unexpected type: {type(row)}, skipped")
+
             return standardised
 
         # If results is neither a numeric value nor a dictionary/list, return an empty list
@@ -210,7 +233,6 @@ class OutputHandler:
         tuple[list, list]
             A tuple containing labels (x-axis) and values (y-axis) for charts.
         """
-
         OutputHandler.logger.debug(f"extracting labels for results of type: {type(results[0])}, {results[:5]}")
 
         # Handle empty results

@@ -31,17 +31,6 @@ def initialise_db(db_path: str):
         Session = sessionmaker(bind=engine)
         session = Session()
 
-        # Additional logic for any data setup can go here
-        # For example, adding initial data or validating the schema
-
-        # Example check for existing cities (optional)
-        from models.city import City
-        from models.country import Country
-        example_city = City(name="Test City", latitude=10.0, longitude=20.0, timezone="UTC", country_id=1)
-        session.add(example_city)
-        session.commit()
-        logger.info(f"Test city added with ID: {example_city.id}")
-
         session.close()
         logger.info("Database initialization completed successfully.")
     except Exception as e:

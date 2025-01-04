@@ -67,7 +67,7 @@ class DatabaseQueryInterface(ABC):
         pass
 
     @abstractmethod
-    def average_mean_temp_by_city(self, city_id: int, start_date: str, end_date: str):
+    def average_temp_by_city(self, city_id: int, start_date: str, end_date: str):
         """
         Fetch the mean temperature for a city within a date range.
 

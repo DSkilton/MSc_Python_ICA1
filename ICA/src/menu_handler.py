@@ -76,7 +76,7 @@ class MenuHandler:
         elif choice == MENU_7DAY_PRECIP:
             self.average_seven_day_precipitation()
         elif choice == MENU_MEAN_TEMP_CITY:
-            self.average_mean_temp_by_city()
+            self.average_temp_by_city()
         elif choice == MENU_ANNUAL_PRECIP_CITY:
             self.average_annual_precipitation_by_country()
         elif choice == MENU_EXIT:
@@ -119,74 +119,82 @@ class MenuHandler:
         city_data = self.location_manager.ensure_location_in_database(location_name)
         self.session_manager.log_session_details()
 
-        if isinstance(city_data, list) and len(city_data) > 0:
-            city_id = city_data[0].id
-        else:
-            city_id = city_data.id
-
-        self.logger.debug(f"menu_handler, after id")
-
         weather_data = self.location_manager.fetch_location_weather_data(city_data, start_date, end_date)
         self.logger.debug(f"menu_handler, weather data: {weather_data[:5]}")
-
-        result = self.query_instance.get_average_temperature(city_id=city_id, year=year)
-        # self.logger.debug(f"menu_handler, weather results: {result}")
 
         monthly_data = self.query_instance.get_monthly_average_temperature(weather_data)
         self.logger.debug(f"menu_handler, monthly data: {monthly_data} type: {type(monthly_data)}")
 
         self.delegate_output(monthly_data, title=TITLE_AVG_TEMP, xlabel=X_LABEL_YEAR, ylabel=Y_LABEL_TEMPERATURE)
-        # ConsoleOutputHandler.handle_console(weather_data, result_title="Average Annual Temperature")
 
 
     def average_seven_day_precipitation(self):
         """
         Retrieve and display the average precipitation over a seven-day period for a city.
         """
-        # Prompt user for city input
-        city_input = input("Enter city ID or name: ")
-
-        # Determine whether the input is an ID or a name
-        if city_input.isdigit():
-            # Search by city ID
-            city_id = int(city_input)
-        else:
-            # Search by city name
-            city = self.query_instance.get_city_by_name(city_input)
-            if not city:
-                print(f"City '{city_input}' not found.")
-                return
-            city_id = city.id
+        location_name = input("Enter location name: ")
+        if not location_name:
+            print("Location name cannot be empty. Please enter a valid city name.")
+            return
 
         # Get the start date
         start_date = InputHandler.get_date_input("Enter start date (yyyy-mm-dd): ")
 
         # Query the database for the average seven-day precipitation
-        results = self.query_instance.average_seven_day_precipitation(city_id, start_date)
+        results = self.location_manager.fetch_seven_day_precipitation(location_name, start_date)
 
         # Display the results
         self.delegate_output(results, title=TITLE_7DAY_PRECIP, xlabel=X_LABEL_CITIES, ylabel=Y_LABEL_PRECIPITATION)
 
 
-    def average_mean_temp_by_city(self):
+    def average_temp_by_city(self):
         """
         Retrieve and display the mean temperature for a city over a specified date range.
         """
-        date_from = InputHandler.get_date_input("Enter start date: ")
-        date_to = InputHandler.get_date_input("Enter end date: ")
-        city_id = InputHandler.get_integer_input("Enter city ID: ")
-        results = self.query_instance.average_mean_temp_by_city(date_from, date_to, city_id)
+        location_name = input("Enter location name: ")
+        
+        if not location_name:
+            print("Location name cannot be empty. Please enter a valid city name.")
+            return
+
+        date_from = InputHandler.get_date_input("Enter start date (format: yyyy-mm-dd): ")
+        date_to = InputHandler.get_date_input("Enter end date (format: yyyy-mm-dd): ")
+
+        results = self.location_manager.average_temp_by_city(date_from, date_to, location_name)
         self.delegate_output(results, title=TITLE_MEAN_TEMP_CITY, xlabel=X_LABEL_TEMPERATURE, ylabel=Y_LABEL_TEMPERATURE)
 
 
     def average_annual_precipitation_by_country(self):
         """
         Retrieve and display the annual precipitation for all cities in a given country.
+        Uses the LocationManager for fetching data.
         """
         year = InputHandler.get_year_input("Enter year as YYYY: ")
-        country_id = InputHandler.get_integer_input("Enter country ID: ")
-        results = self.query_instance.average_annual_preciption_by_country(country_id, year)
-        self.delegate_output(results, title=TITLE_ANNUAL_PRECIP, xlabel=X_LABEL_PRECIPITATION, ylabel=Y_LABEL_PRECIPITATION)
+        location_name = input("Enter location name: ")
+
+        if not location_name:
+            print("Location name cannot be empty. Please enter a valid city name.")
+            return
+
+        # Ensure the location exists and fetch weather data
+        country = self.location_manager.ensure_location_in_database(location_name)
+
+        if not country:
+            print(f"City '{country}' not found in the database.")
+            return
+        else:
+            self.logger.debug(f"Found city: {type(country)}, year: {type(year)}, {country}")
+
+
+        # Fetch the annual and monthly precipitation data
+        year = int(year)
+        results = self.location_manager.average_annual_precipitation_by_country(location_name, year)
+        self.logger.debug(f"results of type: {type(results)}, {results}")
+
+        if results:
+            self.delegate_output(results, title=TITLE_ANNUAL_PRECIP, xlabel=X_LABEL_PRECIPITATION, ylabel=Y_LABEL_PRECIPITATION)
+        else:
+            print("No precipitation data available for this country and year.")
 
 
     def delegate_output(self, results, title, xlabel, ylabel):

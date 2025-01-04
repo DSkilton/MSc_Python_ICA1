@@ -157,7 +157,7 @@ class SQLiteQuery(DatabaseQueryInterface):
         return total_precip
 
 
-    def average_seven_day_precipitation(self, city_id, start_date):
+    def average_seven_day_precipitation(self, city_name, start_date):
         """
         Calculate average precipitation over seven days.
 
@@ -175,16 +175,20 @@ class SQLiteQuery(DatabaseQueryInterface):
         start_date = datetime.strptime(start_date, "%Y-%m-%d")
         end_date = start_date + timedelta(days=6)
 
+        city = self.session.query(City).filter(City.name.ilike(city_name)).first()
+
         avg_precip = (
-            self.session.query(func.avg(DailyWeatherEntry.precipitation))
-            .filter(DailyWeatherEntry.city_id == city_id)
+            self.session.query(DailyWeatherEntry.date, DailyWeatherEntry.precipitation)
+            .filter(DailyWeatherEntry.city_id == city.id)
             .filter(DailyWeatherEntry.date.between(start_date, end_date))
-            .scalar()
+            .all()
         )
-        return avg_precip
+        precip_data = [(entry[0], entry[1]) for entry in avg_precip]
+        self.logger.debug(f"7 day precip: {precip_data}")
+        return precip_data
 
 
-    def average_mean_temp_by_city(self, city_id, start_date, end_date):
+    def average_temp_by_city(self, start_date, end_date, city_name):
         """
         Calculate mean temperature for a city between two dates.
 
@@ -201,44 +205,99 @@ class SQLiteQuery(DatabaseQueryInterface):
         -------
         float or None
         """
+        self.logger.debug(f"Received city: {city_name}, start_date: {start_date}, end_date: {end_date})")
+
         start_date = datetime.strptime(start_date, "%Y-%m-%d")
         end_date = datetime.strptime(end_date, "%Y-%m-%d")
 
+        city = self.session.query(City).filter(City.name.ilike(city_name)).first()
+
+        if not city:
+            self.logger.error(f"City '{city_name}' not found in the database.")
+            return None
+
+        self.logger.debug(f"Fetched city: {city.name} with ID: {city.id}")
+
+        # Query the average temperature for the given city and date range
         avg_temp = (
             self.session.query(func.avg(DailyWeatherEntry.mean_temp))
-            .filter(DailyWeatherEntry.city_id == city_id)
+            .filter(DailyWeatherEntry.city_id == city.id)
             .filter(DailyWeatherEntry.date.between(start_date, end_date))
             .scalar()
         )
+
+        self.logger.debug(f"Average temperature for {city_name} from {start_date} to {end_date}: {avg_temp} °C")
+
         return avg_temp
 
 
-    def average_annual_precipitation_by_country(self, country_id, year):
+
+    def average_annual_precipitation_by_country(self, country_name, year):
         """
-        Calculate total precipitation for a country in a year.
+        Calculate total precipitation for a country in a given year and return monthly totals.
 
         Parameters
         ----------
-        country_id : int
-            Country ID.
+        country_name : str
+            Name of the country.
         year : int
             Year.
 
         Returns
         -------
-        float or None
+        dict
+            A dictionary containing the total annual precipitation and a breakdown by month.
         """
+        # Retrieve the country
+        country = self.session.query(Country).filter(Country.name.ilike(country_name)).first()
+
+        if not country:
+            self.logger.error(f"Country '{country_name}' not found in the database.")
+            return None
+
+        # Define the start and end dates for the year
         start_date = datetime(year, 1, 1)
         end_date = datetime(year, 12, 31)
 
+        self.logger.debug(f"Received country: {country.name}, start_date: {start_date}, end_date: {end_date})")
+
+        # Query for monthly precipitation totals per city in the country
+        monthly_precip = (
+            self.session.query(
+                func.extract('month', DailyWeatherEntry.date).label('month'),
+                func.sum(DailyWeatherEntry.precipitation).label('monthly_precip')
+            )
+            .join(City, City.id == DailyWeatherEntry.city_id)
+            .join(Country, Country.id == City.country_id)
+            .filter(Country.id == country.id)
+            .filter(DailyWeatherEntry.date.between(start_date, end_date))
+            .group_by('month')
+            .order_by('month')
+            .all()
+        )
+
+        # Aggregate the data into a dictionary for monthly precipitation
+        monthly_data = {month: round(precip, 2) for month, precip in monthly_precip}
+
+        # Query for total precipitation for the year
         total_precip = (
             self.session.query(func.sum(DailyWeatherEntry.precipitation))
             .join(City, City.id == DailyWeatherEntry.city_id)
-            .filter(City.country_id == country_id)
+            .join(Country, Country.id == City.country_id)
+            .filter(Country.id == country.id)
             .filter(DailyWeatherEntry.date.between(start_date, end_date))
             .scalar()
         )
-        return total_precip
+
+        total_precip = round(total_precip, 2) if total_precip is not None else 0
+
+        self.logger.debug(f"Total precipitation for {country_name} in {year}: {total_precip} mm")
+
+        # Return both the total annual precipitation and the monthly breakdown
+        return {
+            'total_precipitation': total_precip,
+            'monthly_precipitation': monthly_data
+        }
 
 
     def does_city_exist(self, city_name: str):

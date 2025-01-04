@@ -5,6 +5,78 @@ select * from cities;
 select * from countries;
 select * from daily_weather_entries;
 
+DELETE FROM cities;
+DELETE FROM SQLITE_SEQUENCE WHERE name = 'cities';
+
+DELETE FROM countries;
+DELETE FROM SQLITE_SEQUENCE WHERE name = 'countries';
+
+DELETE FROM daily_weather_entries;
+DELETE FROM SQLITE_SEQUENCE WHERE name = 'daily_weather_entries';
+
+
+WITH DuplicateRows AS (
+    SELECT 
+        name, 
+        timezone, 
+        MIN(ROWID) AS min_rowid -- Keep the first occurrence (row with the smallest ROWID)
+    FROM countries
+    GROUP BY name, timezone
+    HAVING COUNT(*) > 1
+)
+DELETE FROM countries
+WHERE ROWID NOT IN (
+    SELECT min_rowid
+    FROM DuplicateRows
+);
+
+
+WITH DuplicateRows AS (
+    SELECT 
+        date, 
+        city_id, 
+        max_temp, 
+        min_temp, 
+        precipitation, 
+        MIN(ROWID) AS min_rowid -- Keep the first occurrence (row with the smallest ROWID)
+    FROM daily_weather_entries
+    GROUP BY date, city_id, max_temp, min_temp, precipitation
+    HAVING COUNT(*) > 1
+)
+DELETE FROM daily_weather_entries
+WHERE ROWID NOT IN (
+    SELECT min_rowid
+    FROM DuplicateRows
+);
+
+SELECT name, 
+       ROUND(latitude, 6) AS latitude, 
+       ROUND(longitude, 6) AS longitude, 
+       country_id, 
+       COUNT(*)
+FROM cities
+GROUP BY name, 
+         ROUND(latitude, 6), 
+         ROUND(longitude, 6), 
+         country_id
+HAVING COUNT(*) > 1;
+
+WITH DuplicateRows AS (
+    SELECT 
+        date, city_id, max_temp, min_temp, precipitation, 
+        MIN(ROWID) AS min_rowid -- Keep the first occurrence (row with the smallest ROWID)
+    FROM daily_weather_entries
+    GROUP BY date, city_id, max_temp, min_temp, precipitation
+    HAVING COUNT(*) > 1
+)
+SELECT * 
+FROM daily_weather_entries
+WHERE ROWID NOT IN (
+    SELECT min_rowid
+    FROM DuplicateRows
+);
+
+
 ALTER TABLE daily_weather_entries ADD COLUMN mean_temp REAL;
 
 -- PRAGMA table_info(daily_weather_entries);
