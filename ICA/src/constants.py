@@ -80,3 +80,8 @@ TEMPERATURE_2M_MIN = "temperature_2m_min"
 PRECIPITATION_SUM = "precipitation_sum"
 
 ID = "id"
+
+MONTH_NAMES = [
+        "January", "February", "March", "April", "May", "June", "July", "August", 
+        "September", "October", "November", "December"
+]

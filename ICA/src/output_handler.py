@@ -5,6 +5,7 @@ from models.country import Country
 from models.daily_weather_entry import DailyWeatherEntry
 from output_handler_registry import OutputHandlerRegistry
 from sqlalchemy.engine.row import Row
+from constants import *
 
 class OutputHandler:
     """
@@ -39,7 +40,6 @@ class OutputHandler:
         results = OutputHandler._standardise_results(results)
         # OutputHandler.logger.debug(f"output_handler, type of result: {type(results)}")
         # OutputHandler.logger.debug(f"Results standardised: {results}")
-
 
         if not isinstance(results, list):
             print("Results should be a list or a numeric value. Falling back to console.")
@@ -85,6 +85,16 @@ class OutputHandler:
             print("No data to display.")
             return
 
+        if 'Temperature' in results[0]:
+            OutputHandler._display_temperature_table(results)
+        elif 'precipitation' in results[0]:
+            OutputHandler._display_precipitation_table(results)
+        else:
+            OutputHandler._print_to_console(results)
+
+
+    @staticmethod
+    def _print_to_console(results):
         # Extract headers dynamically
         headers = list(results[0].keys())
 
@@ -131,6 +141,93 @@ class OutputHandler:
                 for header in headers
             ]
             print(header_format.format(*row_values))
+
+
+    @staticmethod
+    def _display_temperature_table(results):
+        """
+        Display results for temperature data in a table format.
+        Parameters
+        ----------
+        results : list[dict]
+            A list of temperature data with 'Month' and 'Temperature' as keys.
+        """
+        if not results:
+            OutputHandler.logger.info("No temperature data available.")
+            return
+
+        headers = ['Month', 'Temperature °C']
+        column_widths = {header: len(header) for header in headers}
+        column_widths['Month'] = max(len(month) for month in MONTH_NAMES)
+
+        for item in results:
+            temperature = item.get("Temperature")
+            if temperature is not None:
+                column_widths['Temperature °C'] = max(column_widths['Temperature °C'], len(f"{float(temperature):.2f}"))
+
+        # Determine the maximum length of values in each column, including headers
+        for item in results:
+            for header in headers:
+                value = item.get(header.lower(), '')
+                column_widths[header] = max(column_widths[header], len(str(value)))
+
+        # Print headers with formatting
+        header_line = " | ".join(f"{header:<{column_widths[header]}}" for header in headers)
+        separator = "-+-".join("-" * column_widths[header] for header in headers)
+        print()
+        print(header_line)
+        print(separator)
+
+        # Print the rows of data
+        for item in results:
+            month = item.get("Month")
+            temperature = item.get("Temperature")
+
+            if month is not None and temperature is not None:
+                try:
+                    temperature = float(temperature)
+                    month_name = MONTH_NAMES[month - 1]
+                    # Ensure the month and temperature columns have consistent widths
+                    print(f"{month_name:<{column_widths['Month']}} | {temperature:<{column_widths['Temperature °C']}.2f}")
+                except ValueError:
+                    OutputHandler.logger.error(f"Invalid temperature value: {temperature}")
+                    print(f"{month_name:<{column_widths['Month']}} | Invalid Temperature")
+            else:
+                OutputHandler.logger.error(f"Missing Month or Temperature in item: {item}")
+                print(f"{'Invalid Data':<{column_widths['Month']}} | {'Invalid Data':<{column_widths['Temperature °C']}}")
+
+
+    @staticmethod
+    def _display_precipitation_table(results):
+        """
+        Display results for precipitation data in a table format.
+        Parameters
+        ----------
+        results : list[dict]
+            A list of precipitation data with 'ID', 'Date', 'City ID', 'Precipitation'.
+        """
+        if not results:
+            OutputHandler.logger.info(f"No precipitation data available.")
+            return
+
+        headers = ['ID', 'Date', 'Precipitation']
+        column_widths = {header: len(header) for header in headers}
+
+        for row in results:
+            for header in headers:
+                value = row.get(header.lower(), '')
+                column_widths[header] = max(column_widths[header], len(str(value)))
+
+        # Print headers with formatting
+        header_line = " | ".join(f"{header:<{column_widths[header]}}" for header in headers)
+        separator = "-+-".join("-" * column_widths[header] for header in headers)
+        print()
+        print(header_line)
+        print(separator)
+
+        # Print the rows of data
+        for row in results:
+            print(" | ".join(f"{str(row.get(header.lower(), '')):<{column_widths[header]}}" for header in headers))
 
 
     @staticmethod
@@ -196,7 +293,7 @@ class OutputHandler:
                         OutputHandler.logger.error(f"Failed to process Row: {e}")
                         continue
                 else:
-                    OutputHandler.logger.error(f"Standardising row, unexpected type: {type(row)}, skipped")
+                    OutputHandler.logger.error(f"Standardising row, unexpected type: {type(row)}, skipped: {row}")
 
             return standardised
 
@@ -233,7 +330,7 @@ class OutputHandler:
         tuple[list, list]
             A tuple containing labels (x-axis) and values (y-axis) for charts.
         """
-        OutputHandler.logger.debug(f"extracting labels for results of type: {type(results[0])}, {results[:5]}")
+        # OutputHandler.logger.debug(f"extracting labels for results of type: {type(results[0])}, {results[:5]}")
 
         # Handle empty results
         if not results or not isinstance(results[0], dict):
@@ -250,7 +347,7 @@ class OutputHandler:
             values = [list(row.values()) for row in results]
             labels = [list(row.keys()) for row in results]
 
-        OutputHandler.logger.debug(f"output_handler, labels: {labels}, values: {values}, of type: {type(values)}")
+        # OutputHandler.logger.debug(f"output_handler, labels: {labels}, values: {values}, of type: {type(values)}")
 
         return labels, values
 
