@@ -137,11 +137,11 @@ class MenuHandler:
             print("Location name cannot be empty. Please enter a valid city name.")
             return
 
-        # Get the start date
         start_date = InputHandler.get_date_input("Enter start date (yyyy-mm-dd): ")
+        self.logger.debug(f"avg 7 day precip start_date: {start_date}")
 
-        # Query the database for the average seven-day precipitation
         results = self.location_manager.fetch_seven_day_precipitation(location_name, start_date)
+        self.logger.debug(f"avg 7 day precip type: {type(results)}, {results}")
 
         # Display the results
         self.delegate_output(results, title=TITLE_7DAY_PRECIP, xlabel=X_LABEL_CITIES, ylabel=Y_LABEL_PRECIPITATION)

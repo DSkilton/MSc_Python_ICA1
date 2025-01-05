@@ -142,8 +142,14 @@ class LocationManager:
             self.logger.info(f"City '{city_name}' added to the database with ID {city.id}.")
         else:
             self.logger.debug(f"City '{city_name}' already exists in the database.")
+        
+        # Ensure the city is linked to a valid country
+        if not city.country:
+            self.logger.debug(f"City '{city_name}' does not have a valid country association, linking to country '{country.name}'.")
+            city.country = country
+            self.db_session.commit()
+        
         return city
-
 
     def get_city_from_db(self, location_name):
         """
@@ -339,7 +345,14 @@ class LocationManager:
             A list of 7-day precipitation data or None if there is no data.
         """
         # First, check if the precipitation data exists in the database
+        weather_data = []
         city = self.get_city_from_db(location_name)
+        self.logger.debug(f"7 day dates, start {start_date}")
+
+        start_date = datetime.strptime(start_date, "%Y-%m-%d")
+        mid_date = start_date + timedelta(days=6)
+        start_date = start_date.strftime("%Y-%m-%d")
+        end_date = mid_date.strftime("%Y-%m-%d")
 
         # If the city is not found in the database, attempt to fetch weather data
         if not city:
@@ -347,6 +360,7 @@ class LocationManager:
 
             # Fetch city data from the Geocoding API (this returns a list of cities)
             city_data_list = self.geocoding_service.fetch_city_data(city_name=location_name)
+            self.logger.debug(f"7 day precip, city_data_list {city_data_list}")
 
             if city_data_list:
                 self.logger.debug(f"7 day precip, {city_data_list[0]}")
@@ -359,13 +373,6 @@ class LocationManager:
                 )
 
                 self.logger.debug(f"Country information received: {country}, City data received: {city}")
-
-                start_date = datetime.strptime(start_date, "%Y-%m-%d")
-                mid_date = start_date + timedelta(days=6)
-                start_date = start_date.strftime("%Y-%m-%d")
-                end_date = mid_date.strftime("%Y-%m-%d")
-
-                self.logger.debug(f"7 day dates, start {start_date}, mid: {mid_date}, end: {end_date}")
 
                 # Now we pass the correct City object
                 weather_data = self.fetch_weather_data_for_city(
@@ -410,8 +417,7 @@ class LocationManager:
                 return None
         else:
             self.logger.error(f"Failed to fetch weather data for {location_name}.")
-            return None
-
+            return {}
 
     def average_annual_precipitation_by_country(self, country_name, year):
         """
@@ -486,5 +492,34 @@ class LocationManager:
         }
 
 
-    def average_temp_by_city(date_from, date_to, location_name):
-        self.db_session.average_temp_by_city(date_from, date_to, location_name)
+    def average_temp_by_city(self, start_date, end_date, location_name):
+        self.logger.debug(f"loc man, average_temp_by_city")
+
+        # Get the city object from the database using the location_name
+        city = self.get_city_from_db(location_name)
+        if not city:
+            self.logger.error(f"City '{city}' not found in the database.")
+            city_data = self.geocoding_service.fetch_city_data(location_name)
+
+            if not city_data:
+                self.logger.error(f"City '{location_name}' could not be fetched from Open-Meteo API.")
+                return {}
+
+            # Once the city data is fetched, ensure it is added to the database
+            self.logger.debug(f"Adding city '{location_name}' to the database.")
+            city = city_data[0]
+            self.session_manager.commit_session()
+
+        # Log the city details and fetch weather data
+        self.logger.error(f"City '{city}' found in the database.")
+        weather_data = self.fetch_weather_data_for_city(city, start_date, end_date)
+
+        self.logger.debug(f"Weather data: {weather_data}")
+
+        # Calculate and return the average temperature
+        if weather_data:
+            average_temp = sum(entry.mean_temp for entry in weather_data) / len(weather_data)
+            return average_temp
+        else:
+            self.logger.error(f"No weather data available for city '{city.name}' within the specified range.")
+            return {}
