@@ -27,11 +27,21 @@ from database_manager import DatabaseManager
 # TODO: Sort automated tests
 # TODO: Stop duplicates being saved in db
 # TODO: Longitude and Latitude shouldn't be 2 decimal places 🤦🏼‍♂️
+# TODO: option 3, bar chart xLabel should be month, not year
+# TODO: option 3, bar chart Labels should be month
+# TODO: option 4, bar chart An error occurred: float expected at most 1 argument, got 2
+# TODO: option 4, pie chart An error occurred: float expected at most 1 argument, got 2
+# TODO: option 5, result can be over a period of years. Bar and pie chart should consider the length of data and apply labels 
+# TODO: option 6, bar chart Standardising results of type: Annual Precipitation by Country. Results should be a list or a numeric value. Falling back to console.
+# TODO: testing, specifically black box
+# TODO: testing, a small amount of automated
+# TODO: requirements.txt
+# TODO: readme
 
 # Register handlers dynamically
 OutputHandlerRegistry.register_handler("console", ConsoleOutputHandler.handle_console)
-OutputHandlerRegistry.register_handler("bar_chart", GraphOutputHandler.plot_bar)
-OutputHandlerRegistry.register_handler("pie_chart", GraphOutputHandler.plot_pie)
+OutputHandlerRegistry.register_handler("bar_chart", GraphOutputHandler.handle_graph)
+OutputHandlerRegistry.register_handler("pie_chart", GraphOutputHandler.handle_graph)
 # OutputHandlerRegistry.register_handler("scatter_plot", GraphOutputHandler.plot_scatter)
 # OutputHandlerRegistry.register_handler("line_chart", GraphOutputHandler.plot_line)
 
@@ -68,20 +78,21 @@ class WeatherDataApplication:
         self.logger = logging.getLogger(self.__class__.__name__)
 
         # Initialize SQLAlchemy engine and session
-        abs_db_path = abspath(db_path)
-        engine = create_engine(f"sqlite:///{abs_db_path}")
+        print(f"main db_path: {db_path}")
+        engine = create_engine(f"sqlite:///{db_path}")
         session_factory = sessionmaker(bind=engine)
         self.session_manager = SessionManager(session_factory)
 
+        # Initialize the database schema
         initialise_db(db_path)
 
+        # Initialize other components
         self.db_manager = DatabaseManager(engine)
         self.query_instance = SQLiteQuery(self.session_manager.get_session())
         self.menu_handler = MenuHandler(self.query_instance, self.db_manager, self.session_manager)
         self.weather_service = WeatherApiService(session=self.session_manager.get_session())
 
         self.logger.info("WeatherDataApplication initialised")
-
 
     def run(self):
         """
@@ -102,9 +113,8 @@ class WeatherDataApplication:
         # Close session on exit
         self.session_manager.close_session()
 
-
 if __name__ == "__main__":
     # Initialize database path
-    DB_PATH = "db/CIS4044-N-SDI-OPENMETEO-PARTIAL.db"
+    DB_PATH = "db\\CIS4044-N-SDI-OPENMETEO-PARTIAL.db"
     app = WeatherDataApplication(DB_PATH)
     app.run()

@@ -5,24 +5,10 @@ import time
 import logging 
 
 class BaseApiService:
-    """
-    Base class for shared API service logic.
-    Provides retry functionality, request execution, and error handling.
-    """
+    
 
     def __init__(self, base_url, max_retries=3, retry_delay=2):
-        """
-        Initialize the BaseApiService.
-
-        Parameters
-        ----------
-        base_url : str
-            The base URL for the API.
-        max_retries : int
-            Maximum number of retry attempts for failed API calls.
-        retry_delay : int
-            Delay (in seconds) between retries.
-        """
+        
         self.base_url = base_url
         self.max_retries = max_retries
         self.retry_delay = retry_delay
@@ -31,26 +17,7 @@ class BaseApiService:
 
 
     def _make_request(self, endpoint="", params=None):
-        """
-        Execute an HTTP GET request with retry logic.
-
-        Parameters
-        ----------
-        endpoint : str
-            The specific endpoint to append to the base URL.
-        params : dict
-            Query parameters for the GET request.
-
-        Returns
-        -------
-        dict
-            Parsed JSON response from the API.
-
-        Raises
-        ------
-        Exception
-            If all retry attempts fail or the response is invalid.
-        """
+        
         self.logger.debug(f"Attempting to make request to {self.base_url}/{endpoint} with params {params}")
 
         url = f"{self.base_url}/{endpoint}".strip("/")
@@ -68,7 +35,7 @@ class BaseApiService:
                     self.logger.error(f"Invalid response structure from API: {type(data)}, {data}")
                     raise ValueError("Invalid response structure from API.")
                 self.logger.debug(f"Request succeeded on attempt {attempt}")
-                # self.logger.debug(f"Base_api, data to be returned {data}")
+                
                 return data
             except requests.RequestException as e:
                 self.logger.error(f"Attempt {attempt} failed: {e}")
@@ -89,29 +56,18 @@ class BaseApiService:
 import logging
 
 class ConsoleOutputHandler:
-    """
-    Handles displaying data in the console.
-    """
+    
 
     logger = logging.getLogger(__name__)
 
     @staticmethod
     def handle_console(results, result_title=None):
-        """
-        Dynamically chooses the appropriate console display method.
-
-        Parameters
-        ----------
-        results : list[dict] or float
-            The results to display.
-        result_title : str, optional
-            Title for displaying single result (e.g., 'Average Temperature').
-        """
+        
         ConsoleOutputHandler.logger.info(f"console_output_handler, handle_console results: {results[:10]}")
         ConsoleOutputHandler.logger.info(f"console_output_handler, handle_console results: {type(results)}")
         
-        # Validate results
-        if isinstance(results, (int, float)):  # Handle single numeric results
+        
+        if isinstance(results, (int, float)):  
             ConsoleOutputHandler.display_single_result(result_title, results)
             return
         
@@ -119,39 +75,32 @@ class ConsoleOutputHandler:
             print("No valid data to display.")
             return
 
-        # Extract headers for the table
+        
         headers = list(results[0].keys())
         widths = {header: max(len(header), max(len(str(row.get(header, ''))) for row in results)) for header in headers}
 
-        # Print headers with proper alignment
+        
         header_line = " | ".join(f"{header:<{widths[header]}}" for header in headers)
         separator = "-+-".join("-" * widths[header] for header in headers)
         print(header_line)
         print(separator)
 
-        # Print rows with proper alignment
+        
         for row in results:
             print(" | ".join(f"{str(row.get(header, '')):<{widths[header]}}" for header in headers))
 
     @staticmethod
     def display_table(results):
-        """
-        Display a list of results in tabular format.
-
-        Parameters
-        ----------
-        results : list[dict]
-            A list of dictionaries representing rows of data.
-        """
+        
         if not results:
             print("No data available to display.")
             ConsoleOutputHandler.logger.warning("No data available to display.")
             return
 
-        # Extract headers for the table
+        
         headers = results[0].keys()
 
-        # Calculate column widths
+        
         column_widths = {header: len(header) for header in headers}
         ConsoleOutputHandler.logger.debug(f"Initial column widths (headers): {column_widths}")
 
@@ -162,14 +111,14 @@ class ConsoleOutputHandler:
 
         ConsoleOutputHandler.logger.debug(f"Final column widths (adjusted): {column_widths}")
 
-        # Format and print headers
+        
         header_line = " | ".join(f"{header:<{column_widths[header]}}" for header in headers)
         separator_line = "-+-".join("-" * column_widths[header] for header in headers)
 
         print(header_line)
         print(separator_line)
 
-        # Print rows of data with proper alignment
+        
         for row in results:
             row_line = " | ".join(
                 f"{str(row.get(header, '')):<{column_widths[header]}}" for header in headers
@@ -178,32 +127,16 @@ class ConsoleOutputHandler:
 
     @staticmethod
     def display_single_result(result_title, result):
-        """
-        Display a single numeric result with two decimal places.
-
-        Parameters
-        ----------
-        result_title : str
-            Title for the result (e.g., 'Average Temperature').
-        result : float or int
-            The result to display.
-        """
+        
         print(f"{result_title}: {result:.2f}")
 
 
     @staticmethod
     def display_monthly_avg_temperature(monthly_data):
-        """
-        Display monthly average temperature in a formatted table.
-
-        Parameters
-        ----------
-        monthly_data : dict
-            A dictionary where the key is the month (1-12) and the value is the average temperature.
-        """
+        
         print(f"Monthly Average Temperature:")
         headers = ['Month', 'Average Temperature (°C)']
-        # Find the maximum width needed for the month and average temperature columns
+        
         widths = {
             'Month': len('Month'),
             'Average Temperature (°C)': len('Average Temperature (°C)')
@@ -212,39 +145,34 @@ class ConsoleOutputHandler:
             widths['Month'] = max(widths['Month'], len(str(month)))
             widths['Average Temperature (°C)'] = max(widths['Average Temperature (°C)'], len(f"{temp:.2f}"))
 
-        # Print headers with proper formatting
+        
         header_line = f"{'Month':<{widths['Month']}} | {'Average Temperature (°C)':<{widths['Average Temperature (°C)']}}"
         separator = f"{'-' * widths['Month']} +- {'-' * widths['Average Temperature (°C)']}"
         print(header_line)
         print(separator)
 
-        # Print each month's data with formatted temperature
+        
         for month, temp in monthly_data.items():
             print(f"{month:<{widths['Month']}} | {temp:.2f}".ljust(widths['Average Temperature (°C)']))
 
 
 ### File: E:/Users/Student/Documents/MSc/Python ICA1/CIS4044-N-ICA/ICA/src\constants.py (Filename: constants.py) ###
 
-"""
-This module defines constants used across the Weather Data Application.
 
-Defines constants used across the Weather Data Application. This module provides 
-a single location for managing constants, ensuring consistency and reducing duplication.
-"""
 
-# Date
+
 START_OF_YEAR = "-01-01"
 END_OF_YEAR = "-12-31"
 
-# Query
+
 SELECT_FROM = "SELECT * FROM "
 
-# table names
+
 DAILY_WEATHER_TBL = "daily_weather_entries"
 COUNTRIES_TBL = "countries"
 CITIES_TBL = "cities"
 
-# table fields
+
 CITY = "city"
 CITY_ID = "city_id"
 COUNTRY_ID = "country_id"
@@ -254,14 +182,14 @@ DATE = "date"
 MEAN_TEMP = "mean_temp"
 YEAR = "year"
 
-# Display choices
+
 DISPLAY_CONSOLE = 1
 DISPLAY_BAR_CHART = 2
 DISPLAY_PIE_CHART = 3
 DISPLAY_SCATTER_PLOT = 4
 DISPLAY_LINE_CHART = 5
 
-# Main menu options
+
 MENU_VIEW_COUNTRIES = 1
 MENU_VIEW_CITIES = 2
 MENU_AVG_TEMP = 3
@@ -270,7 +198,7 @@ MENU_MEAN_TEMP_CITY = 5
 MENU_ANNUAL_PRECIP_CITY = 6
 MENU_EXIT = 0
 
-# Labels and Titles for Output
+
 TITLE_COUNTRIES = "Countries"
 TITLE_CITIES = "Cities"
 TITLE_AVG_TEMP = "Average Temperature"
@@ -278,14 +206,14 @@ TITLE_7DAY_PRECIP = "Average Seven-Day Precipitation"
 TITLE_MEAN_TEMP_CITY = "Mean Temperature by City"
 TITLE_ANNUAL_PRECIP = "Annual Precipitation by Country"
 
-# x Labels for graphs
+
 X_LABEL_COUNTRIES = "Country Name"
 X_LABEL_CITIES = "City Name"
 X_LABEL_TEMPERATURE = "Temperature"
 X_LABEL_PRECIPITATION = "Precipitation"
 X_LABEL_YEAR = "Year"
 
-# y Labels for graphs
+
 Y_LABEL_COUNTRY_ID = "Country Id"
 Y_LABEL_CITY_ID = "City Id"
 Y_LABEL_TEMPERATURE = "Temperature (°C)"
@@ -322,107 +250,53 @@ from sqlalchemy.exc import SQLAlchemyError
 from models import Base, Country, City, DailyWeatherEntry
 import logging
 
-# Configure logging
+
 logging.basicConfig(level=logging.INFO)
 logging.getLogger('sqlalchemy.engine').setLevel(logging.DEBUG)
 logger = logging.getLogger("db_initialiser")
 
-# Database location
+
 DATABASE_URL = "sqlite:///CIS4044-N-SDI-OPENMETEO-PARTIAL.db"
 
-# Database engine
+
 engine = create_engine(DATABASE_URL, echo=True)
 
-# Create a configured Session class
+
 Session = sessionmaker(bind=engine)
 
 
 def remove_duplicates(session, model):
-    """
-    Remove duplicate rows from the given model, excluding the 'id' column.
     
-    Parameters
-    ----------
-    session : Session
-        The SQLAlchemy session object.
-    model : Base
-        The SQLAlchemy model class (Country, City, DailyWeatherEntry).
-    """
     try:
-        # Initialize an empty list to collect duplicates
+        
         duplicates = []
 
-        # Query the rows in the table excluding the 'id' column
+        
         if model == Country:
-            # Country has 'name' and 'timezone' as unique identifiers
-            query = """
-                WITH DuplicateRows AS (
-                    SELECT 
-                        name, 
-                        timezone, 
-                        MIN(ROWID) AS min_rowid -- Keep the first occurrence (row with the smallest ROWID)
-                    FROM countries
-                    GROUP BY name, timezone
-                    HAVING COUNT(*) > 1
-                )
-                DELETE FROM countries
-                WHERE ROWID NOT IN (
-                    SELECT min_rowid
-                    FROM DuplicateRows
-                );
-            """
+            
+            query = 
             duplicates = session.execute(query).fetchall()
 
         elif model == City:
-            # City has 'name', 'latitude', 'longitude', 'country_id' as unique identifiers
-            query = """
-                SELECT name, 
-                ROUND(latitude, 6) AS latitude, 
-                ROUND(longitude, 6) AS longitude, 
-                country_id, 
-                COUNT(*)
-            FROM cities
-            GROUP BY name, 
-                    ROUND(latitude, 6), 
-                    ROUND(longitude, 6), 
-                    country_id
-            HAVING COUNT(*) > 1;
-            """
+            
+            query = 
             duplicates = session.execute(query).fetchall()
 
         elif model == DailyWeatherEntry:
-            # DailyWeatherEntry has 'date', 'city_id', 'max_temp', 'min_temp', 'precipitation' as unique identifiers
-            query = """
-                WITH DuplicateRows AS (
-                    SELECT 
-                        date, 
-                        city_id, 
-                        max_temp, 
-                        min_temp, 
-                        precipitation, 
-                        MIN(ROWID) AS min_rowid -- Keep the first occurrence (row with the smallest ROWID)
-                    FROM daily_weather_entries
-                    GROUP BY date, city_id, max_temp, min_temp, precipitation
-                    HAVING COUNT(*) > 1
-                )
-                DELETE FROM daily_weather_entries
-                WHERE ROWID NOT IN (
-                    SELECT min_rowid
-                    FROM DuplicateRows
-                );
-            """
+            
+            query = 
             duplicates = session.execute(query).fetchall()
 
-        # Remove duplicates based on the results of the query
+        
         for duplicate in duplicates:
-            rowid = duplicate[-1]  # Get the ROWID of the earliest occurrence
-            # Prepare the WHERE clause conditions for deleting duplicates, except for the MIN(ROWID)
+            rowid = duplicate[-1]  
+            
             condition = " AND ".join([f"{column} = :{column}" for column in duplicate[:-1]])
-            # Delete duplicate rows, keeping only the one with MIN(ROWID)
+            
             session.execute(f"DELETE FROM {model.__tablename__} WHERE ROWID != {rowid} AND ({condition})",
                             {column: value for column, value in zip(duplicate[:-1], duplicate[:-1])})
 
-        # Commit changes
+        
         session.commit()
         logger.info(f"Duplicates removed for {model.__name__}")
 
@@ -433,14 +307,11 @@ def remove_duplicates(session, model):
 
 
 def clean_duplicates_in_background():
-    """
-    This function runs the cleanup process in a background thread.
-    It will remove duplicates from all tables (Country, City, DailyWeatherEntry).
-    """
+    
     session = Session()
 
     try:
-        # Run duplicate removal for each model in a background thread
+        
         logger.info("Starting background cleanup of duplicate rows...")
         models = [Country, City, DailyWeatherEntry]
         for model in models:
@@ -453,15 +324,13 @@ def clean_duplicates_in_background():
 
 
 def initialise_database():
-    """
-    Initializes the database by creating tables if they don't exist and cleaning duplicates.
-    """
+    
     try:
         logger.info("Creating database tables...")
         Base.metadata.create_all(engine)
         logger.info("Database initialised successfully.")
 
-        # Start the cleanup process in the background
+        
         clean_duplicates_in_background()
 
     except SQLAlchemyError as e:
@@ -479,44 +348,21 @@ import logging
 from sqlalchemy.orm import sessionmaker
 
 class DatabaseManager:
-    """
-    Manages database connection and session handling.
-    """
+    
 
     def __init__(self, engine):
-        """
-        Initialize the database manager with the provided database URL.
-
-        Parameters
-        ----------
-        db_url : str
-            The URL for the database connection.
-        """
+        
         self.engine = engine
         self.session = sessionmaker(bind=self.engine)
 
 
     def get_session(self):
-        """
-        Create and return a new database session.
-
-        Returns
-        -------
-        session : sqlalchemy.orm.Session
-            A new database session instance.
-        """
+        
         return self.session()
 
 
     def close_session(self, session):
-        """
-        Close the given database session.
-
-        Parameters
-        ----------
-        session : sqlalchemy.orm.Session
-            The database session to close.
-        """
+        
         try:
             session.close()
         except Exception as e:
@@ -524,19 +370,7 @@ class DatabaseManager:
 
 
     def execute_query(self, query):
-        """
-        Execute a raw SQL query.
-
-        Parameters
-        ----------
-        query : str
-            The SQL query string to execute.
-
-        Returns
-        -------
-        result : list
-            A list of results from the query execution.
-        """
+        
         self.logger.debug(f"Executing query: {query}")
         session = self.get_session()
         try:
@@ -559,160 +393,47 @@ class DatabaseManager:
 from abc import ABC, abstractmethod
 
 class DatabaseQueryInterface(ABC):
-    """
-    Abstract base class for querying database weather data.
-
-    Provides a blueprint for fetching temperature and precipitation information
-    for specific cities and years. Concrete implementations should provide
-    the logic for interacting with their respective data sources.
-    """
+    
 
     @abstractmethod
     def get_average_temperature(self, city_id: int, year: int):
-        """
-        Fetch the average temperature for a given city and year.
-
-        Parameters
-        ----------
-        city_id : int
-            The ID of the city to query.
-        year : int
-            The year for which to fetch the data.
-
-        Returns
-        -------
-        float
-            The average temperature for the specified city and year.
-        """
+        
         pass
 
     @abstractmethod
     def get_precipitation_data(self, city_id: int, year: int):
-        """
-        Fetch the total precipitation data for a given city and year.
-
-        Parameters
-        ----------
-        city_id : int
-            The ID of the city to query.
-        year : int
-            The year for which to fetch the data.
-
-        Returns
-        -------
-        float
-            The total precipitation for the specified city and year.
-        """
+        
         pass
 
     @abstractmethod
     def average_seven_day_precipitation(self, city_id: int, start_date: str):
-        """
-        Fetch the average precipitation over a seven-day period.
-
-        Parameters
-        ----------
-        city_id : int
-            The ID of the city to query.
-        start_date : str
-            The starting date for the seven-day period (format: yyyy-mm-dd).
-
-        Returns
-        -------
-        float
-            The average precipitation over the period.
-        """
+        
         pass
 
     @abstractmethod
     def average_temp_by_city(self, city_id: int, start_date: str, end_date: str):
-        """
-        Fetch the mean temperature for a city within a date range.
-
-        Parameters
-        ----------
-        city_id : int
-            The ID of the city to query.
-        start_date : str
-            The start date for the range.
-        end_date : str
-            The end date for the range.
-
-        Returns
-        -------
-        float
-            The mean temperature within the specified range.
-        """
+        
         pass
 
     @abstractmethod
     def average_annual_precipitation_by_country(self, country_id: int, year: int):
-        """
-        Fetch the annual precipitation for all cities in a specified country.
-
-        Parameters
-        ----------
-        country_id : int
-            The ID of the country.
-        year : int
-            The year to query.
-
-        Returns
-        -------
-        float
-            The total precipitation for the specified country and year.
-        """
+        
         pass
 
     @abstractmethod
     def does_city_exist(self, city_name: str):
-        """
-        Check if a city exists in the database.
-
-        Parameters
-        ----------
-        city_name : str
-            The name of the city.
-
-        Returns
-        -------
-        bool
-            True if the city exists, False otherwise.
-        """
+        
         pass
 
     @abstractmethod
     def insert_city(self, city_data: dict):
-        """
-        Insert a new city into the database.
-
-        Parameters
-        ----------
-        city_data : dict
-            Dictionary containing city information (name, latitude, longitude, country, timezone).
-        """
+        
         pass
 
     @abstractmethod
     def get_country_id_by_name(self, country_name: str):
-        """
-        Retrieve the ID of a country based on its name.
-
-        Parameters
-        ----------
-        country_name : str
-            The name of the country.
-
-        Returns
-        -------
-        int or None
-            The ID of the country, or None if not found.
-        """
+        
         pass
-
-
-### File: E:/Users/Student/Documents/MSc/Python ICA1/CIS4044-N-ICA/ICA/src\display_strategy.py (Filename: display_strategy.py) ###
-
 
 
 ### File: E:/Users/Student/Documents/MSc/Python ICA1/CIS4044-N-ICA/ICA/src\geocoding_api_service.py (Filename: geocoding_api_service.py) ###
@@ -725,9 +446,7 @@ from session_manager import SessionManager
 from models import *
 
 class GeocodingApiService(BaseApiService):
-    """
-    Service for interacting with the Open-Meteo Geocoding API.
-    """
+    
 
     def __init__(self, session_manager: SessionManager, max_retries=3, retry_delay=2):
         super().__init__(base_url="https://geocoding-api.open-meteo.com/v1/search", max_retries=max_retries, retry_delay=retry_delay)
@@ -735,26 +454,12 @@ class GeocodingApiService(BaseApiService):
 
 
     def fetch_city_data(self, city_name):
-        """
-        Fetches geocoding data for a given city name from the Open-Meteo API, processes the data,
-        and saves the city information (and optional country) to the database.
-
-        Args:
-            city_name (str): The name of the city to fetch data for.
-
-        Returns:
-            list: A list containing the `City` object(s) added to the database.
         
-        Raises:
-            ValueError: If no results are found for the given city name.
-            SQLAlchemyError: If there is a database-related error during the transaction.
-            Exception: If any other unexpected error occurs.
-        """
         self.logger.debug(f"Fetching geocoding data for city: {city_name}")
         try:
-            # Fetch city data from the API
+            
             response = self._make_request(params={'name': city_name})
-            # self.logger.debug(f"API Response: {response}")
+            
             data = response.get("results", [])
 
             if response and response.get("results"):
@@ -763,15 +468,15 @@ class GeocodingApiService(BaseApiService):
                 self.logger.error(f"No results found for {city_name}")            
                 raise ValueError(f"No results found for city: {city_name}")
 
-            # Handle multiple city results
+            
             if len(data) > 1:
                 print(f"Multiple locations found for '{city_name}':")
                 for idx, city in enumerate(data):
-                    # Use country or country_code
+                    
                     country_display = city.get('country', city.get('country_code', 'N/A'))
                     print(f"{idx + 1}. {city['name']}, {country_display} (Lat: {city['latitude']}, Lon: {city['longitude']})")
 
-                # Get user choice
+                
                 try:
                     choice = int(input(f"Please select a city (1-{len(data)}): ")) - 1
                     if choice < 0 or choice >= len(data):
@@ -788,38 +493,38 @@ class GeocodingApiService(BaseApiService):
             self.logger.debug(f"City selected: {city_info}")
             self.logger.debug(f"City keys: {city_info.keys()}")
 
-            # Ensure the city data has required fields
+            
             if 'name' not in city_info or 'latitude' not in city_info or 'longitude' not in city_info:
                 self.logger.error(f"Incomplete city data: {city_info}")
                 raise ValueError(f"Incomplete data for city: {city_info}")
 
-            # Attempt to get the country (check if 'country' is present)
-            country_name = city_info.get('country', None) or city_info.get('country_code', None)  # Try country first, then country_code
+            
+            country_name = city_info.get('country', None) or city_info.get('country_code', None)  
             country = None
             if country_name:
                 self.logger.debug(f"Extracted country: {country_name} from city info")
                 self.logger.debug(f"Searching for country: {country_name}")
                 
-                # Check if the country already exists in the database
+                
                 country = self.session.query(Country).filter_by(name=country_name).first()
                 
                 if country:
                     self.logger.debug(f"Country {country_name} already exists in the database, skipping creation.")
                 else:
-                    # Country not found, adding it to the database
+                    
                     self.logger.debug(f"Country not found in database. Adding new country: {country_name}")
                     country = Country(name=country_name, timezone=city_info.get('timezone', 'Unavailable'))
                     self.session.add(country)
                     self.session.commit()
             else:
-                # Log a warning if no country is found in the API data
+                
                 self.logger.warning(f"No country found for city: {city_info['name']}. Storing as unavailable.")
-                # Save as unavailable if no country data
+                
                 country = Country(name="Unavailable", timezone="Unavailable")
                 self.session.add(country)
                 self.session.commit()
 
-            # Insert city data (even if no country is linked)
+            
             self.logger.debug(f"Creating city with name: {city_info['name']}, Latitude: {city_info['latitude']}, Longitude: {city_info['longitude']}")
             city = City(
                 name=city_info['name'],
@@ -849,63 +554,42 @@ class GeocodingApiService(BaseApiService):
 
 ### File: E:/Users/Student/Documents/MSc/Python ICA1/CIS4044-N-ICA/ICA/src\graph_output_handler.py (Filename: graph_output_handler.py) ###
 
-import matplotlib.pyplot as plt
 import logging
+import matplotlib.pyplot as plt
+from constants import MONTH_NAMES
 
 class GraphOutputHandler:
-    """
-    Handles graph plotting for various data visualization types.
-    """
+    
 
     logger = logging.getLogger(__name__)
 
     @staticmethod
     def handle_graph(choice, labels, values, title, xlabel=None, ylabel=None):
-        """
-        Routes the graph display based on user choice.
-
-        Parameters
-        ----------
-        choice : str
-            The type of graph to display ("bar_chart", "pie_chart", etc.).
-        labels : list[str]
-            A list of labels for the x-axis.
-        values : list[int]
-            A list of numerical values for the y-axis.
-        title : str
-            The title of the chart.
-        xlabel : str, optional
-            The label for the x-axis.
-        ylabel : str, optional
-            The label for the y-axis.
-        """
+        
         GraphOutputHandler.logger.info(f"Title: {title}, X-Label: {xlabel}, Y-Label: {ylabel}")
         GraphOutputHandler.logger.info(f"Graph type: {choice}")
         GraphOutputHandler.logger.info(f"Labels: {labels}")
         GraphOutputHandler.logger.info(f"Values: {values}")
 
-        if not values or sum([v for v in values if isinstance(v, (int, float))]) == 0:
-            GraphOutputHandler.logger.warning("No valid data for graphing.")
-            print("No valid data available for graphing.")
-            return
+        
+        values = [float(v) if isinstance(v, str) else v for v in values]
 
-        # Filter out invalid values
+        
         valid_data = [(label, value) for label, value in zip(labels, values) if isinstance(value, (int, float))]
         if not valid_data:
             GraphOutputHandler.logger.warning("No valid numeric data available for graphing.")
             print("No valid numeric data to display as a graph.")
             return
 
-        # Unpack filtered data
         labels, values = zip(*valid_data)
 
         GraphOutputHandler.logger.debug(f"Filtered Labels: {labels}")
         GraphOutputHandler.logger.debug(f"Filtered Values: {values}")
 
         try:
-            if choice == "bar_chart":
+            if choice == 2:
                 GraphOutputHandler.plot_bar(labels, values, title, xlabel, ylabel)
-            elif choice == "pie_chart":
+            elif choice == 3:
                 GraphOutputHandler.plot_pie(values, labels, title)
             else:
                 print(f"Graph type '{choice}' is not supported.")
@@ -915,33 +599,18 @@ class GraphOutputHandler:
             print("Falling back to console output.")
             print("Results:", values)
 
-
     @staticmethod
     def plot_bar(labels: list[str], values: list[int], title: str, xlabel: str, ylabel: str):
-        """
-        Plot a bar chart using the given labels and values.
-
-        Parameters
-        ----------
-        labels : list[str]
-            A list of labels for the x-axis.
-        values : list[int]
-            A list of numerical values for the y-axis.
-        title : str
-            The title of the bar chart.
-        xlabel : str
-            The label for the x-axis.
-        ylabel : str
-            The label for the y-axis.
-        """
+        
         plt.close('all')
 
         GraphOutputHandler.logger.debug(f"plot bar, title: {title}")
         GraphOutputHandler.logger.debug(f"plot bar, xlabel: {xlabel}")
         GraphOutputHandler.logger.debug(f"plot bar, ylabel: {ylabel}")
-
         GraphOutputHandler.logger.debug(f"plot bar, Labels: {labels}")
         GraphOutputHandler.logger.debug(f"plot bar, Values: {values}")
+
+        
 
         try:
             if not values or sum([v for v in values if isinstance(v, (int, float))]) == 0:
@@ -965,23 +634,11 @@ class GraphOutputHandler:
 
     @staticmethod
     def plot_pie(labels, values, title):
-        """
-        Plot a pie chart using the given labels and values.
-
-        Parameters
-        ----------
-        values : list[int]
-            A list of numerical values for the y-axis.
-        labels : list[str]
-            A list of labels for the x-axis.
-        title : str
-            The title of the bar chart.
-        """
+        
         plt.close('all')
         try:
             if not values or sum([v for v in values if isinstance(v, (int, float))]) == 0:
                 GraphOutputHandler.logger.warning("No valid data for pie chart.")
-                print("No valid data available for pie chart.")
                 return
 
             values = [float(v) for v in values]
@@ -997,22 +654,7 @@ class GraphOutputHandler:
 
     @staticmethod
     def plot_scatter(labels, values, title, xlabel, ylabel):
-        """
-        Plot a scatter chart using the given labels and values.
-
-        Parameters
-        ----------
-        labels : list[str]
-            A list of labels for the x-axis.
-        values : list[int]
-            A list of numerical values for the y-axis.
-        title : str
-            The title of the bar chart.
-        xlabel : str
-            The label for the x-axis.
-        ylabel : str
-            The label for the y-axis.
-        """
+        
         plt.figure(figsize=(10, 6))
         plt.scatter(labels, values, c='blue', marker='o')
         plt.title(title)
@@ -1027,84 +669,72 @@ class GraphOutputHandler:
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from models import Base
-from os.path import abspath
 import logging
+import os
 
 def initialise_db(db_path: str):
-    """
-    Initialize the database, setting up the schema and ensuring the correct constraints.
-    """
-    # Configure logging
+    
+    
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s - %(levelname)s - %(message)s",
         handlers=[
-            logging.StreamHandler()  # Output to console
+            logging.StreamHandler()  
         ]
     )
     logger = logging.getLogger("initialize_db")
 
     try:
-        abs_db_path = abspath(db_path)
-        engine = create_engine(f"sqlite:///{abs_db_path}")
+        abs_db_path = db_path
+        
+        db_directory = os.path.dirname(abs_db_path)
+        if not os.path.exists(db_directory):
+            raise FileNotFoundError(f"The directory for the database does not exist: {db_directory}")
 
-        # Create tables based on models, but no unique constraint on latitude, longitude
+        
+        if os.path.exists(abs_db_path) and not os.access(abs_db_path, os.W_OK):
+            raise PermissionError(f"Cannot write to the database file: {abs_db_path}")
+
+        
+        engine = create_engine(f"sqlite:///{abs_db_path}")
+        print(f"engine: {engine}")
+
+        
         logger.info("Creating tables...")
         Base.metadata.create_all(engine)
         logger.info("Tables created successfully.")
 
-        # Open a session to verify insertion
+        
         Session = sessionmaker(bind=engine)
         session = Session()
-
         session.close()
+
         logger.info("Database initialization completed successfully.")
     except Exception as e:
         logger.error(f"An error occurred during database initialization: {e}")
 
+
 if __name__ == "__main__":
-    DB_PATH = "db/CIS4044-N-SDI-OPENMETEO-PARTIAL.db"
-    initialize_db(DB_PATH)
+    DB_PATH = "db\\CIS4044-N-SDI-OPENMETEO-PARTIAL.db"
+    print("initialise_db db_path: {DB_PATH}")
+    initialise_db(DB_PATH)
+
 
 ### File: E:/Users/Student/Documents/MSc/Python ICA1/CIS4044-N-ICA/ICA/src\input_handler.py (Filename: input_handler.py) ###
 
-"""
-Module for handling user input validation.
 
-This module provides methods for user input validation. It ensures all inputs
-are valid before being passed to other parts of the application.
-"""
 from datetime import datetime
 import logging
 
 
 class InputHandler:
-    """
-    A utility class for handling and validating user input.
-    """
+    
 
     logger = logging.getLogger(__name__)
 
     @staticmethod
     def get_integer_input(prompt: str) -> int:
-        """
-        Prompt the user for an integer input and validate the input.
-
-        Parameters
-        ----------
-        prompt : str
-            The prompt message to display to the user.
-
-        Returns
-        -------
-        int
-            The validated integer input provided by the user.
-
-        Raises
-        ------
-        ValueError
-            If the user input is not a valid integer, the user will be prompted again.
-        """
+        
         while True:
             try:
                 choice = int(input(prompt))
@@ -1119,23 +749,7 @@ class InputHandler:
 
     @staticmethod
     def get_year_input(prompt: str) -> str:
-        """
-        Prompt the user for a year input and validate it as a four-digit year.
-
-        Parameters
-        ----------
-        prompt : str
-            The prompt message to display to the user.
-
-        Returns
-        -------st
-        str
-            The validated year input as a four-character string.
-
-        Notes
-        -----
-        The year input must consist of exactly four digits (e.g., "2020").
-        """
+        
         while True:
             user_input = input(prompt)
             if len(user_input) == 4 and user_input.isdigit():
@@ -1145,33 +759,12 @@ class InputHandler:
 
     @staticmethod
     def get_date_input(prompt: str) -> str:
-        """
-        Prompt the user for a date input and validate it in the format yyyy-mm-dd.
-
-        Parameters
-        ----------
-        prompt : str
-            The prompt message to display to the user.
-
-        Returns
-        -------
-        str
-            The validated date input as a string in the format yyyy-mm-dd.
-
-        Raises
-        ------
-        ValueError
-            If the user input does not conform to the expected date format or is invalid.
-
-        Notes
-        -----
-        The date must be valid and conform to the format yyyy-mm-dd.
-        """
+        
         while True:
             user_input = input(prompt)
             try:
                 date = datetime.strptime(user_input, "%Y-%m-%d")
-                # Parse the input string to validate it as a date
+                
                 if date > datetime.now():
                     print("The start date cannot be in the future. Please try again.")
                     continue
@@ -1183,11 +776,7 @@ class InputHandler:
 
     @staticmethod
     def get_latitude_longitude(prompt: str) -> float:
-        """
-        Validate latitude or longitude input ensuring it falls within acceptable ranges.
-        Latitude: -90 to 90
-        Longitude: -180 to 180
-        """
+        
         while True:
             try:
                 value = float(input(prompt))
@@ -1215,9 +804,7 @@ from models import *
 from constants import *
 
 class LocationManager:
-    """
-    Manages location-related operations, including geocoding and database interactions.
-    """
+    
     logger = logging.getLogger(__name__)
 
     def __init__(self, session_manager: SessionManager, geocoding_service: GeocodingApiService):
@@ -1229,59 +816,44 @@ class LocationManager:
 
 
     def ensure_location_in_database(self, location_name):
-        """
-        Ensures that a city with the given name exists in the database. If the city does not exist,
-        it fetches the city data using the Geocoding API, creates a new country (if necessary),
-        and then adds the city to the database. If multiple cities are found, the user is prompted
-        to select one.
-
-        Parameters
-        ----------
-        location_name : str
-            The name of the city to ensure exists in the database.
-
-        Returns
-        -------
-        city : City
-            The city object, either newly created or fetched from the database.
-        """
+        
         city_info = None
         self.session_manager.log_session_details()
         self.logger.debug(f"Starting transaction for '{location_name}'")
 
-        # Check if the city already exists in the database
+        
         self.logger.debug(f"Checking if city '{location_name}' exists in the database.")
         city = self.get_city_from_db(location_name)
         if city:
             self.logger.info(f"City '{location_name}' already exists in the database.")
             return [city]
 
-        # Fetch the city data from the Geocoding API
+        
         self.logger.debug(f"Fetching city data for '{location_name}' from Geocoding API.")
         location_data_list = self.geocoding_service.fetch_city_data(location_name)
         if len(location_data_list) > 1:
-            # If multiple cities are found, prompt the user to select one
+            
             self.logger.info(f"Multiple locations found for '{location_name}'. Please select one:")
             for idx, loc in enumerate(location_data_list):
                 self.logger.debug(f"{idx + 1}. {loc.name}, {loc.country} (Lat: {loc.latitude}, Lon: {loc.longitude})")
 
-            # Here, you'd have a method to handle user input. For simplicity, assume user selects the first city.
-            choice = 0  # Assume user selected the first city for simplicity, replace with actual input handling
+            
+            choice = 0  
             city_info = location_data_list[choice]
             self.logger.debug(f"City info selected: {city_info}")
         else:
             city_info = location_data_list[0]
             self.logger.debug(f"Single city found: {city_info}")
 
-        # Ensure the country exists in the database, or create it if it doesn't
+        
         self.logger.debug(f"Ensuring country '{city_info.country}' exists in the database.")
         country = self.ensure_country_exists(location_name)
 
-        # Ensure the city exists, or create it if it doesn't
+        
         self.logger.debug(f"Ensuring city '{city_info.name}' exists in the database.")
         city = self.ensure_city_exists(city_info.name, city_info.latitude, city_info.longitude, country)
 
-        # Commit the transaction
+        
         self.session_manager.commit_session()
         self.logger.info(f"Location '{location_name}' added to the database.")
 
@@ -1290,20 +862,7 @@ class LocationManager:
 
 
     def ensure_country_exists(self, country_name):
-        """
-        Ensures that a country with the given name exists in the database.
-        If the country does not exist, it creates a new country.
-
-        Parameters:
-        ----------
-        country_name : str
-            The name of the country to ensure exists in the database.
-
-        Returns
-        -------
-        country : Country
-            The Country object, either newly created or fetched from the database.
-        """
+        
         country = self.db_session.query(Country).filter(Country.name.ilike(country_name)).first()
         if not country:
             self.logger.debug(f"Country '{country_name}' not found, creating new entry.")
@@ -1317,26 +876,7 @@ class LocationManager:
 
 
     def ensure_city_exists(self, city_name, latitude, longitude, country):
-        """
-        Ensures that a city with the given name, latitude, and longitude exists in the database.
-        If the city does not exist, it creates a new city and associates it with the provided country.
-
-        Parameters:
-        ----------
-        city_name : str
-            The name of the city to ensure exists in the database.
-        latitude : float
-            The latitude of the city.
-        longitude : float
-            The longitude of the city.
-        country : Country
-            The Country object to associate the city with.
-
-        Returns
-        -------
-        city : City
-            The City object, either newly created or fetched from the database.
-        """
+        
         city = self.db_session.query(City).filter_by(name=city_name).first()
 
         if not city:
@@ -1348,7 +888,7 @@ class LocationManager:
         else:
             self.logger.debug(f"City '{city_name}' already exists in the database.")
         
-        # Ensure the city is linked to a valid country
+        
         if not city.country:
             self.logger.debug(f"City '{city_name}' does not have a valid country association, linking to country '{country.name}'.")
             city.country = country
@@ -1357,51 +897,23 @@ class LocationManager:
         return city
 
     def get_city_from_db(self, location_name):
-        """
-        Check if the city already exists in the database.
-
-        Parameters
-        ----------
-        location_name : str
-            Name of the city to check.
-
-        Returns
-        -------
-        City or None
-            The city if found, otherwise None.
-        """
+        
         self.logger.debug(f"Checking if location '{location_name}' exists in the database.")
         return self.db_session.query(City).options(joinedload(City.country)).filter_by(name=location_name).first()
 
 
     def fetch_location_weather_data(self, city_data, start_date, end_date):
-        """
-        Fetch historical weather data for a location.
-
-        Parameters
-        ----------
-        location_name : str
-            Name of the location to fetch weather data for.
-        start_date : str
-            Start date for the weather data (format: yyyy-mm-dd).
-        end_date : str
-            End date for the weather data (format: yyyy-mm-dd).
-
-        Returns
-        -------
-        dict
-            Weather data fetched for the location.
-        """
+        
         self.logger.debug(f"Checking if location '{city_data}' exists in the database.")
 
-        # Get the city from the data
+        
         city = self.get_city_from_data(city_data)
 
         if not city:
             self.logger.error(f"City '{city_data}' not found in the database.")
             return {}
 
-        # Fetch weather data for the city
+        
         weather_data = self.fetch_weather_data_for_city(city, start_date, end_date)
 
         self.logger.error(f"Weather dated fetched '{weather_data[:5]}'")
@@ -1410,24 +922,12 @@ class LocationManager:
             self.logger.error(f"Failed to fetch valid weather data for city '{city.name}'.")
             return {}
 
-        # Process and store the weather data
+        
         return self.process_weather_data(weather_data, city)
 
 
     def get_city_from_data(self, city_data):
-        """
-        Extracts the city object from the provided city data.
-
-        Parameters
-        ----------
-        city_data : list or City
-            City data which can either be a list (if multiple cities) or a single city object.
-
-        Returns
-        -------
-        City or None
-            The city object if found, otherwise None.
-        """
+        
         if isinstance(city_data, list) and city_data:
             city = city_data[0]
             self.logger.debug(f"Location data is a list, using the first city: {city.name}")
@@ -1441,23 +941,7 @@ class LocationManager:
 
 
     def fetch_weather_data_for_city(self, city, start_date, end_date):
-        """
-        Fetch weather data for a given city from the weather API.
-
-        Parameters
-        ----------
-        city : City
-            The city for which to fetch weather data.
-        start_date : str
-            The start date for the weather data (yyyy-mm-dd).
-        end_date : str
-            The end date for the weather data (yyyy-mm-dd).
-
-        Returns
-        -------
-        WeatherData or None
-            The weather data for the city, or None if the data is invalid or fetching failed.
-        """
+        
         self.logger.debug(f"Fetching weather data for city: {city.name} (Lat: {city.latitude}, Lon: {city.longitude})")
         
         weather_data = self.weather_service.fetch_weather_data(
@@ -1470,23 +954,7 @@ class LocationManager:
 
 
     def fetch_weather_data_for_country(self, country, start_date, end_date):
-        """
-        Fetch weather data for a given country from the weather API.
-
-        Parameters
-        ----------
-        city : City
-            The city for which to fetch weather data.
-        start_date : str
-            The start date for the weather data (yyyy-mm-dd).
-        end_date : str
-            The end date for the weather data (yyyy-mm-dd).
-
-        Returns
-        -------
-        WeatherData or None
-            The weather data for the city, or None if the data is invalid or fetching failed.
-        """
+        
         self.logger.debug(f"Fetching weather data for country: {country}, type: {type(country)}")
         
         weather_data = self.weather_service.fetch_weather_data_for_country(
@@ -1499,31 +967,16 @@ class LocationManager:
 
 
     def process_weather_data(self, weather_data, city):
-        """
-        Processes the fetched weather data, maps it to `DailyWeatherEntry` objects, 
-        and stores it in the database.
-
-        Parameters
-        ----------
-        weather_data : WeatherData
-            The fetched weather data to process.
-        city : City
-            The city associated with the weather data.
-
-        Returns
-        -------
-        dict
-            The processed weather data.
-        """
+        
         self.logger.debug(f"Processing weather data for city {city}. len {len(weather_data)}")
 
         try:
-            # Map weather data to DailyWeatherEntry objects
+            
             for data in weather_data:
-                # self.logger.debug(f"Mapping raw data for: {data} ")
+                
                 self.db_session.add(data)
 
-            # Commit the transaction
+            
             self.db_session.commit()
             self.logger.debug(f"Weather data successfully added to the database for city {city}.")
         except ValueError as e:
@@ -1534,22 +987,8 @@ class LocationManager:
 
 
     def fetch_seven_day_precipitation(self, location_name, start_date):
-        """
-        Retrieves 7-day precipitation data from the database or fetches it from Open-Meteo if not found.
-
-        Parameters
-        ----------
-        location_name : str
-            The name of the city.
-        start_date : str
-            The start date of the 7-day period.
-
-        Returns
-        -------
-        list
-            A list of 7-day precipitation data or None if there is no data.
-        """
-        # First, check if the precipitation data exists in the database
+        
+        
         weather_data = []
         city = self.get_city_from_db(location_name)
         self.logger.debug(f"7 day dates, start {start_date}")
@@ -1559,11 +998,11 @@ class LocationManager:
         start_date = start_date.strftime("%Y-%m-%d")
         end_date = mid_date.strftime("%Y-%m-%d")
 
-        # If the city is not found in the database, attempt to fetch weather data
+        
         if not city:
             self.logger.warning(f"City '{location_name}' not found in the database. Fetching data from Open-Meteo.")
 
-            # Fetch city data from the Geocoding API (this returns a list of cities)
+            
             city_data_list = self.geocoding_service.fetch_city_data(city_name=location_name)
             self.logger.debug(f"7 day precip, city_data_list {city_data_list}")
 
@@ -1571,7 +1010,7 @@ class LocationManager:
                 self.logger.debug(f"7 day precip, {city_data_list[0]}")
                 city_info = city_data_list[0]
 
-                # Ensure the city is now a City object
+                
                 country = self.ensure_country_exists(location_name)
                 city = self.ensure_city_exists(
                     city_info.name, city_info.latitude, city_info.longitude, country
@@ -1579,35 +1018,35 @@ class LocationManager:
 
                 self.logger.debug(f"Country information received: {country}, City data received: {city}")
 
-                # Now we pass the correct City object
+                
                 weather_data = self.fetch_weather_data_for_city(
                     city, start_date, end_date
                 )
                 self.logger.info(f"7 day precip, weather_data: {weather_data}")
 
-                # If Open-Meteo data is available, process and store it, then return
+                
                 if weather_data:
                     self.process_weather_data(weather_data, location_name)
                     return weather_data
                 else:
                     self.logger.error(f"No data available for {location_name} from Open-Meteo.")
                     print(f"No data available for {location_name}. Returning to the menu...")
-                    return None  # Return to the menu or handle accordingly
+                    return None  
 
         self.logger.debug(f"City '{location_name}' found in the database.")
 
-        # Check if the 7-day precipitation data already exists in the database
+        
         existing_data = self.db_session.query(DailyWeatherEntry.precipitation).filter(
             DailyWeatherEntry.city_id == city.id,
             DailyWeatherEntry.date.between(start_date, end_date)
         ).all()
 
         if existing_data:
-            # Return the existing data if available
+            
             self.logger.info(f"Returning existing precipitation data for {location_name}.")
             return existing_data
 
-        # Process the data and save it to the database
+        
         if weather_data:
             weather_data_obj = WeatherData(weather_data)
 
@@ -1625,35 +1064,21 @@ class LocationManager:
             return {}
 
     def average_annual_precipitation_by_country(self, country_name, year):
-        """
-        Calculate total precipitation for a country in a given year and return monthly totals.
-
-        Parameters
-        ----------
-        country_name : str
-            Name of the country.
-        year : int
-            Year.
-
-        Returns
-        -------
-        dict
-            A dictionary containing the total annual precipitation and a breakdown by month.
-        """
-        # Retrieve the country
+        
+        
         country = self.db_session.query(Country).filter(Country.name.ilike(country_name)).first()
 
         if not country:
             self.logger.debug(f"Country '{country_name}' not found in the database.")
             return None
 
-        # Define the start and end dates for the year
+        
         start_date = datetime(year, 1, 1)
         end_date = datetime(year, 12, 31)
 
         self.logger.debug(f"Received country: {country.name}, start_date: {start_date}, end_date: {end_date})")
 
-        # Query for monthly precipitation totals per city in the country
+        
         monthly_precip = (
             self.db_session.query(
                 func.extract('month', DailyWeatherEntry.date).label('month'),
@@ -1670,11 +1095,11 @@ class LocationManager:
 
         self.logger.debug(f"by country, monthly_precip: {monthly_precip}")
 
-        # Aggregate the data into a dictionary for monthly precipitation
+        
         monthly_data = {month: round(precip, 2) for month, precip in monthly_precip}
         self.logger.debug(f"by country, monthly_data zipped: {monthly_data}")
 
-        # Query for total precipitation for the year
+        
         total_precip = (
             self.db_session.query(func.sum(DailyWeatherEntry.precipitation))
             .join(City, City.id == DailyWeatherEntry.city_id)
@@ -1690,7 +1115,7 @@ class LocationManager:
 
         self.logger.debug(f"Total precipitation for {country_name} in {year}: {total_precip} mm")
 
-        # Return both the total annual precipitation and the monthly breakdown
+        
         return {
             'total_precipitation': total_precip,
             'monthly_precipitation': monthly_data
@@ -1700,7 +1125,7 @@ class LocationManager:
     def average_temp_by_city(self, start_date, end_date, location_name):
         self.logger.debug(f"loc man, average_temp_by_city")
 
-        # Get the city object from the database using the location_name
+        
         city = self.get_city_from_db(location_name)
         if not city:
             self.logger.error(f"City '{city}' not found in the database.")
@@ -1710,18 +1135,18 @@ class LocationManager:
                 self.logger.error(f"City '{location_name}' could not be fetched from Open-Meteo API.")
                 return {}
 
-            # Once the city data is fetched, ensure it is added to the database
+            
             self.logger.debug(f"Adding city '{location_name}' to the database.")
             city = city_data[0]
             self.session_manager.commit_session()
 
-        # Log the city details and fetch weather data
+        
         self.logger.error(f"City '{city}' found in the database.")
         weather_data = self.fetch_weather_data_for_city(city, start_date, end_date)
 
         self.logger.debug(f"Weather data: {weather_data}")
 
-        # Calculate and return the average temperature
+        
         if weather_data:
             average_temp = sum(entry.mean_temp for entry in weather_data) / len(weather_data)
             return average_temp
@@ -1732,14 +1157,10 @@ class LocationManager:
 
 ### File: E:/Users/Student/Documents/MSc/Python ICA1/CIS4044-N-ICA/ICA/src\main.py (Filename: main.py) ###
 
-"""
-Main module for the Weather Data Application.
 
-This module initializes and runs the WeatherDataApplication.
-"""
 
-# Author: <Duncan Skilton>
-# Student ID: <S6310391>
+
+
 
 import logging
 from sqlalchemy import create_engine
@@ -1755,60 +1176,58 @@ from sqlite_query import SQLiteQuery
 from menu_handler import MenuHandler
 from database_manager import DatabaseManager
 
-# TODO: Write tests for docstrings
-# TODO: Write some integration tests
-# TODO: Check all imports
-# TODO: Sort automated tests
-# TODO: Stop duplicates being saved in db
-# TODO: Longitude and Latitude shouldn't be 2 decimal places 🤦🏼‍♂️
 
-# Register handlers dynamically
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 OutputHandlerRegistry.register_handler("console", ConsoleOutputHandler.handle_console)
-OutputHandlerRegistry.register_handler("bar_chart", GraphOutputHandler.plot_bar)
-OutputHandlerRegistry.register_handler("pie_chart", GraphOutputHandler.plot_pie)
-# OutputHandlerRegistry.register_handler("scatter_plot", GraphOutputHandler.plot_scatter)
-# OutputHandlerRegistry.register_handler("line_chart", GraphOutputHandler.plot_line)
+OutputHandlerRegistry.register_handler("bar_chart", GraphOutputHandler.handle_graph)
+OutputHandlerRegistry.register_handler("pie_chart", GraphOutputHandler.handle_graph)
 
-# Configure logging
+
+
+
 logging.basicConfig(
     level=logging.DEBUG,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.StreamHandler()  # Output to console
+        logging.StreamHandler()  
     ]
 )
 logger = logging.getLogger(__name__)
 logging.getLogger('matplotlib').setLevel(logging.WARNING)
 
 class WeatherDataApplication:
-    """
-    Main application class for the Weather Data Application.
-
-    Responsibilities:
-    - Initializes database connection and query handlers.
-    - Delegates user interactions to MenuHandler.
-    - Manages application lifecycle.
-    """
+    
 
     def __init__(self, db_path: str):
-        """
-        Initialize the WeatherDataApplication.
-
-        Parameters
-        ----------
-        db_path : str
-            The path to the SQLite database file.
-        """
+        
         self.logger = logging.getLogger(self.__class__.__name__)
 
-        # Initialize SQLAlchemy engine and session
-        abs_db_path = abspath(db_path)
-        engine = create_engine(f"sqlite:///{abs_db_path}")
+        
+        print(f"main db_path: {db_path}")
+        engine = create_engine(f"sqlite:///{db_path}")
         session_factory = sessionmaker(bind=engine)
         self.session_manager = SessionManager(session_factory)
 
+        
         initialise_db(db_path)
 
+        
         self.db_manager = DatabaseManager(engine)
         self.query_instance = SQLiteQuery(self.session_manager.get_session())
         self.menu_handler = MenuHandler(self.query_instance, self.db_manager, self.session_manager)
@@ -1816,12 +1235,8 @@ class WeatherDataApplication:
 
         self.logger.info("WeatherDataApplication initialised")
 
-
     def run(self):
-        """
-        Start application by repeatedly displaying the main menu
-        until the user chooses to exit.
-        """
+        
         while True:
             choice = self.menu_handler.display_main_menu()
 
@@ -1833,23 +1248,19 @@ class WeatherDataApplication:
                 self.logger.error(f"An error occurred: {e}")
                 print("An unexpected error occurred. Please try again.")
 
-        # Close session on exit
+        
         self.session_manager.close_session()
 
-
 if __name__ == "__main__":
-    # Initialize database path
-    DB_PATH = "db/CIS4044-N-SDI-OPENMETEO-PARTIAL.db"
+    
+    DB_PATH = "db\\CIS4044-N-SDI-OPENMETEO-PARTIAL.db"
     app = WeatherDataApplication(DB_PATH)
     app.run()
 
+
 ### File: E:/Users/Student/Documents/MSc/Python ICA1/CIS4044-N-ICA/ICA/src\menu_handler.py (Filename: menu_handler.py) ###
 
-"""
-Menu Handler
 
-Manages the user menu system for the Weather Data Application.
-"""
 import logging
 from input_handler import InputHandler
 from location_manager import LocationManager
@@ -1860,23 +1271,10 @@ from geocoding_api_service import GeocodingApiService
 from constants import *
 
 class MenuHandler:
-    """
-    Handles menu display and user choice delegation.
-    """
+    
 
     def __init__(self, query_instance, db_manager, session_manager: SessionManager):
-        """
-        Initialize the MenuHandler.
-
-        Parameters
-        ----------
-        query_instance : SQLiteQuery
-            Instance of SQLiteQuery for database interactions.
-        db_manager : DatabaseManager
-            Instance of DatabaseManager for database management.
-        session_manager : SessionManager
-            Instance of SessionManager for session handling.
-        """
+        
         self.logger = logging.getLogger(self.__class__.__name__)
         self.query_instance = query_instance
         self.db_manager = db_manager
@@ -1886,14 +1284,7 @@ class MenuHandler:
 
 
     def display_main_menu(self):
-        """
-        Display the main menu and capture user input.
-
-        Returns
-        -------
-        int
-            The user's menu choice.
-        """
+        
         print("\nWeather Data Application")
         print("1. View all countries")
         print("2. View all cities")
@@ -1906,14 +1297,7 @@ class MenuHandler:
 
 
     def handle_menu_choice(self, choice):
-        """
-        Handle the user's menu choice by delegating to the appropriate method.
-
-        Parameters
-        ----------
-        choice : int
-            The user's menu choice.
-        """
+        
         if choice == MENU_VIEW_COUNTRIES:
             self.view_countries()
         elif choice == MENU_VIEW_CITIES:
@@ -1934,25 +1318,19 @@ class MenuHandler:
 
 
     def view_countries(self):
-        """
-        Fetch and display all countries from the database.
-        """
+        
         results = self.query_instance.get_all_countries()
         OutputHandler.handle_output(1, results, TITLE_COUNTRIES, X_LABEL_COUNTRIES, Y_LABEL_COUNTRY_ID)
 
 
     def view_cities(self):
-        """
-        Fetch and display all cities from the database.
-        """
+        
         results = self.query_instance.get_all_cities()
         OutputHandler.handle_output(1, results, TITLE_CITIES, X_LABEL_COUNTRIES, Y_LABEL_COUNTRY_ID)
 
 
     def average_annual_temperature(self):
-        """
-        Retrieve and display the average annual temperature for a city in a given year.
-        """
+        
         location_name = input("Enter location name: ")
         if not location_name:
             print("Location name cannot be empty. Please enter a valid city name.")
@@ -1976,9 +1354,7 @@ class MenuHandler:
 
 
     def average_seven_day_precipitation(self):
-        """
-        Retrieve and display the average precipitation over a seven-day period for a city.
-        """
+        
         location_name = input("Enter location name: ")
         if not location_name:
             print("Location name cannot be empty. Please enter a valid city name.")
@@ -1990,14 +1366,12 @@ class MenuHandler:
         results = self.location_manager.fetch_seven_day_precipitation(location_name, start_date)
         self.logger.debug(f"avg 7 day precip type: {type(results)}, {results}")
 
-        # Display the results
+        
         self.delegate_output(results, title=TITLE_7DAY_PRECIP, xlabel=X_LABEL_CITIES, ylabel=Y_LABEL_PRECIPITATION)
 
 
     def average_temp_by_city(self):
-        """
-        Retrieve and display the mean temperature for a city over a specified date range.
-        """
+        
         location_name = input("Enter location name: ")
         
         if not location_name:
@@ -2012,10 +1386,7 @@ class MenuHandler:
 
 
     def average_annual_precipitation_by_country(self):
-        """
-        Retrieve and display the annual precipitation for all cities in a given country.
-        Uses the LocationManager for fetching data.
-        """
+        
         year = InputHandler.get_year_input("Enter year as YYYY: ")
         location_name = input("Enter location name: ")
 
@@ -2023,7 +1394,7 @@ class MenuHandler:
             print("Location name cannot be empty. Please enter a valid city name.")
             return
 
-        # Ensure the location exists and fetch weather data
+        
         country = self.location_manager.ensure_location_in_database(location_name)
 
         if not country:
@@ -2033,7 +1404,7 @@ class MenuHandler:
             self.logger.debug(f"Found city: {type(country)}, year: {type(year)}, {country}")
 
 
-        # Fetch the annual and monthly precipitation data
+        
         year = int(year)
         results = self.location_manager.average_annual_precipitation_by_country(location_name, year)
         self.logger.debug(f"results of type: {type(results)}, {results}")
@@ -2045,20 +1416,7 @@ class MenuHandler:
 
 
     def delegate_output(self, results, title, xlabel, ylabel):
-        """
-        Display query results using the OutputHandler.
-
-        Parameters
-        ----------
-        results : list[dict]
-            Query results to display.
-        title : str
-            Title for the output.
-        xlabel : str
-            Label for the x-axis (if applicable).
-        ylabel : str
-            Label for the y-axis (if applicable).
-        """
+        
         self.logger.debug(f"delegating output")
         print("How would you like to display the data?")
         print("1. Console")
@@ -2074,9 +1432,7 @@ class MenuHandler:
 
 
     def exit_application(self):
-            """
-            Close the application and the database connection.
-            """
+            
             print("Closing application")
             self.db_manager.close_connection()
 
@@ -2084,42 +1440,28 @@ class MenuHandler:
 ### File: E:/Users/Student/Documents/MSc/Python ICA1/CIS4044-N-ICA/ICA/src\output_handler.py (Filename: output_handler.py) ###
 
 import logging
-import datetime
+from datetime import datetime, date, timedelta
 from models.city import City
 from models.country import Country
 from models.daily_weather_entry import DailyWeatherEntry
 from output_handler_registry import OutputHandlerRegistry
 from sqlalchemy.engine.row import Row
 from constants import *
+
 class OutputHandler:
-    """
-    Provides methods to display results in the console.
-    """
+    
     logger = logging.getLogger(__name__)
+
     @staticmethod
     def handle_output(choice, results, title=None, xlabel=None, ylabel=None):
-        """
-        Delegates output handling based on the user's choice.
-        Parameters
-        ----------
-        choice : int
-            The display choice (i.e., 1 for console, 2 for bar chart, etc.).
-        results : list[sqlite3.Row] or single numberic value
-            The data to display.
-        title : str, optional
-            The title for graphical outputs.
-        xlabel : str, optional
-            The x-axis label for graphical outputs.
-        ylabel : str, optional
-            The y-axis label for graphical outputs.
-        """
+        
         if not results:
             print("No data available.")
             OutputHandler.logger.warning("No data available.")
             return
         results = OutputHandler._standardise_results(results, title)
-        # OutputHandler.logger.debug(f"output_handler, type of result: {type(results)}")
-        # OutputHandler.logger.debug(f"Results standardised: {results}")
+        
+        
         if not isinstance(results, list):
             print("Results should be a list or a numeric value. Falling back to console.")
             OutputHandler._display_table(results)
@@ -2132,13 +1474,13 @@ class OutputHandler:
         }
         handler_name = handlers.get(choice)
         handler = OutputHandlerRegistry.get_handler(handler_name)
-        OutputHandler.logger.debug(f"Handler selected: {handler_name}")
+        
         try:
             if handler_name == "console":
                 OutputHandler._display_table(results)
             elif handler:
                 OutputHandler.logger.debug(f"Graphing with labels: {labels} and values: {values}")
-                handler(labels, values, title, xlabel, ylabel)
+                handler(choice, labels, values, title, xlabel, ylabel)
             else:
                 raise ValueError(f"Unsupported output type: {handler_name}")
         except Exception as e:
@@ -2149,14 +1491,9 @@ class OutputHandler:
 
     @staticmethod
     def _display_table(results):
-        """
-        Display results in tabular format, ensuring numeric values are formatted to 2 decimal places.
-        Parameters
-        ----------
-        results : list[dict]
-            The tabular results to display.
-        """
+        
         if not results or not isinstance(results, list):
+            print()
             print("No data to display.")
             return
         if 'Temperature' in results[0]:
@@ -2168,37 +1505,37 @@ class OutputHandler:
 
     @staticmethod
     def _print_to_console(results):
-        # Extract headers dynamically
+        
         headers = list(results[0].keys())
-        # Initialize column widths based on header lengths
+        
         column_widths = {header: len(header) for header in headers}
-        # Update column widths based on data in rows
+        
         for row in results:
-            # OutputHandler.logger.debug(f"output_handler, row: {row}")
+            
             for header in headers:
-                # OutputHandler.logger.debug(f"output_handler, header: {header}")
+                
                 value = row.get(header, "")
-                # OutputHandler.logger.debug(f"output_handler, value: {value}")
-                # Ensure id and country_id are treated as integers
+                
+                
                 if header in {"id", "country_id"} and value is not None:
                     try:
                         value = int(float(value))
-                        # OutputHandler.logger.debug(f"Value of type: {type(value)}, {value}")
+                        
                     except ValueError:
                         value = value
-                # Format numeric values to 2 decimal places (for Temperature, Precipitation)
+                
                 if isinstance(value, (int, float)) and header not in {"latitude", "longitude"}:
                     value = round(value, 2)
                     value = f"{value:.2f}"
                 column_widths[header] = max(column_widths[header], len(str(value)))
-        # Create format string for headers and rows
+        
         header_format = " | ".join(f"{{:<{column_widths[header]}}}" for header in headers)
         separator = "-+-".join("-" * column_widths[header] for header in headers)
-        # Print the header
+        
         print()
         print(header_format.format(*headers))
         print(separator)
-        # Print each row
+        
         for row in results:
             row_values = [
                 str(int(row.get(header, 0))) if header in {"id", "country_id"} and row.get(header) is not None
@@ -2209,13 +1546,7 @@ class OutputHandler:
 
     @staticmethod
     def _display_temperature_table(results):
-        """
-        Display results for temperature data in a table format.
-        Parameters
-        ----------
-        results : list[dict]
-            A list of temperature data with 'Month' and 'Temperature' as keys.
-        """
+        
         if not results:
             OutputHandler.logger.info("No temperature data available.")
             return
@@ -2226,18 +1557,18 @@ class OutputHandler:
             temperature = item.get("Temperature")
             if temperature is not None:
                 column_widths['Temperature °C'] = max(column_widths['Temperature °C'], len(f"{float(temperature):.2f}"))
-        # Determine the maximum length of values in each column, including headers
+        
         for item in results:
             for header in headers:
                 value = item.get(header.lower(), '')
                 column_widths[header] = max(column_widths[header], len(str(value)))
-        # Print headers with formatting
+        
         header_line = " | ".join(f"{header:<{column_widths[header]}}" for header in headers)
         separator = "-+-".join("-" * column_widths[header] for header in headers)
         print()
         print(header_line)
         print(separator)
-        # Print the rows of data
+        
         for item in results:
             month = item.get("Month")
             temperature = item.get("Temperature")
@@ -2245,7 +1576,7 @@ class OutputHandler:
                 try:
                     temperature = float(temperature)
                     month_name = MONTH_NAMES[month - 1]
-                    # Ensure the month and temperature columns have consistent widths
+                    
                     print(f"{month_name:<{column_widths['Month']}} | {temperature:<{column_widths['Temperature °C']}.2f}")
                 except ValueError:
                     OutputHandler.logger.error(f"Invalid temperature value: {temperature}")
@@ -2256,13 +1587,7 @@ class OutputHandler:
 
     @staticmethod
     def _display_precipitation_table(results):
-        """
-        Display results for precipitation data in a table format.
-        Parameters
-        ----------
-        results : list[dict]
-            A list of precipitation data with 'ID', 'Date', 'City ID', 'Precipitation'.
-        """
+        
         if not results:
             OutputHandler.logger.info(f"No precipitation data available.")
             return
@@ -2272,75 +1597,61 @@ class OutputHandler:
             for header in headers:
                 value = row.get(header.lower(), '')
                 column_widths[header] = max(column_widths[header], len(str(value)))
-        # Print headers with formatting
+        
         header_line = " | ".join(f"{header:<{column_widths[header]}}" for header in headers)
         separator = "-+-".join("-" * column_widths[header] for header in headers)
         print()
         print(header_line)
         print(separator)
-        # Print the rows of data
+        
         for row in results:
             print(" | ".join(f"{str(row.get(header.lower(), '')):<{column_widths[header]}}" for header in headers))
 
     @staticmethod
     def _standardise_results(results, title):
-        """
-        Standardize results to a list format and format numeric values to 2 decimal places.
-        """
+        
         OutputHandler.logger.debug(f"Standardising results of type: {title}")
 
-        # If results is a numeric type (int or float), return it as a formatted dictionary
+        
         if isinstance(results, (int, float)):
             return [{"Result": f"{results:.2f}"}]
 
-        # If results is a dictionary, process it as such
+        
         if isinstance(results, dict):
-            OutputHandler.logger.debug(f"Result is a dictionary: {type(results)}, {results}")
-
-            # Handle specific titles differently
             if 'Average Seven-Day Precipitation' == title:
                 total_precip = results.get('total_precipitation', 0)
-                OutputHandler.logger.debug(f"Total Precipitation: {total_precip}")
+                
                 results['total_precipitation'] = round(total_precip, 2)
 
             if 'Average Temperature' == title:
-                # Handle the 'monthly_precipitation' directly, assuming it's a dictionary
-                monthly_data = results
-                OutputHandler.logger.debug(f"Monthly Temperature data: {monthly_data}")
+                
                 standardized_results = [{"Month": month, "Temperature": f"{temp:.2f}"} for month, temp in results.items()]
-                OutputHandler.logger.debug(f"Standardized results: {standardized_results}")
+                
                 return standardized_results
 
             if 'Mean Temperature by City' == title:
                 total_precip = results.get('total_precipitation', 0)
-                OutputHandler.logger.debug(f"Total Precipitation: {total_precip}")
+                
                 results['total_precipitation'] = round(total_precip, 2)
-
             return results
 
-        # Handle the case for lists (including tuples or model instances)
+        
         if isinstance(results, list):
             standardised = []
-            
             for row in results:
-                # If row is a tuple (likely precipitation), handle it differently
                 if isinstance(row, tuple):
-                    # If the tuple only contains one element (precipitation), extract and standardize it
                     OutputHandler.logger.debug(f"Row is a tuple, value: {row[0]}")
                     standardised.append({
                         'precipitation': round(row[0], 2)
                     })
-                # Handle model instances like DailyWeatherEntry, City, etc.
                 elif isinstance(row, DailyWeatherEntry):
-                    OutputHandler.logger.debug(f"Converting DailyWeatherEntry object: {row}")
                     standardised.append({
                         'date': row.date,
-                        'precipitation': round(row.precipitation, 2),
-                        'max_temp': round(row.max_temp, 2),
-                        'min_temp': round(row.min_temp, 2)
+                        'precipitation': float(row.precipitation),
+                        'max_temp': float(row.max_temp),
+                        'min_temp': float(row.min_temp),
                     })
                 elif isinstance(row, (City, Country)):
-                    # Ensure the row has a `to_dict` method
                     if hasattr(row, 'to_dict'):
                         standardised.append(row.to_dict())
                     else:
@@ -2348,94 +1659,141 @@ class OutputHandler:
                 elif isinstance(row, dict):
                     OutputHandler.logger.debug("Row is already a dictionary")
                     standardised.append(row)
-
-            OutputHandler.logger.debug(f"Standardized list: {standardised}")
+            
             return standardised
 
-        # If results is neither a numeric value nor a dictionary/list, return an empty list
+        
         OutputHandler.logger.debug("No results to standardise")
         return []
 
     @staticmethod
     def _display_single_result(result):
-        """
-        Display a single numeric result formatted to 2 decimal places
-        Parameters
-        ----------
-        result : float
-            The numeric result to display.
-        """
+        
         print(f"Result: {result:.2f}")
 
     @staticmethod
     def _extract_labels_values_for_cities_and_countries(results):
-        """
-        Extract labels and values for graphs.
-        Parameters
-        ----------
-        results : list[dict]
-            Query results as a list of dictionaries.
-        Returns
-        -------
-        tuple[list, list]
-            A tuple containing labels (x-axis) and values (y-axis) for charts.
-        """
-        # OutputHandler.logger.debug(f"extracting labels for results of type: {type(results[0])}, {results[:5]}")
-        # Handle empty results
+        
+
+        
         if not results or not isinstance(results[0], dict):
             return ["No data"], [0]
-        # Dynamically extract keys as labels and values
+        
+        if isinstance(results[0], dict) and 'date' in results[0] and 'precipitation' in results[0]:
+            labels = [str(row['date']) for row in results]
+            values = [row['precipitation'] for row in results]
+            return labels, values
+
+        
         labels = list(results[0].keys())
         if isinstance(results[0], dict) and "Month" in results[0]:
-            # If it's a dictionary with 'Month' and 'Temperature'
+            
             values = [row["Temperature"] for row in results]
-            labels = [row["Month"] for row in results]
+            labels = OutputHandler._generate_time_period_labels(results)
         else:
             values = [list(row.values()) for row in results]
             labels = [list(row.keys()) for row in results]
-        # OutputHandler.logger.debug(f"output_handler, labels: {labels}, values: {values}, of type: {type(values)}")
+        
         return labels, values
+
     @staticmethod
     def handle_console(results):
-        """
-        Display the results in the console.
-        Parameters
-        ----------
-        results : list[dict] or single numeric value
-            Data to display in the console.
-        """
-        # Handle single numeric results
+        
+        
         if isinstance(results, (int, float)):
             print(f"Experiencing {results:.2f} mm of precipitation")
             return
-        # Handle empty results or non-dictionary results
+        
         if not results or not isinstance(results, list) or not isinstance(results[0], dict):
             print("No valid data available.")
             return
-        # Determine the column headers dynamically
+        
         headers = results[0].keys()
         header_line = " | ".join(headers)
         print(f"Header Line: {header_line}")
         print("-" * len(header_line))
-        # Print each row of data
+        
         for result in results:
             row_line = " | ".join(str(result.get(key, "N/A")) for key in headers)
             print(row_line)
 
     @staticmethod
     def sqlite_row_to_dict(rows):
-        """
-        Converts a list of sqlite3.Row objects to a list of standard dictionaries.
-        Parameters
-        ----------
-        rows : list[sqlite3.Row]
-            The rows fetched from the SQLite database.
-        Returns
-        -------
-        list[dict]
-            A list of dictionaries representing the rows.
-        """
+        
         return [dict(row) for row in rows]
+
+    @staticmethod
+    def _generate_time_period_labels(results):
+        
+        import logging
+        logger = logging.getLogger(__name__)
+
+        
+        logger.debug(f"Received results of type: {type(results)}")
+        logger.debug(f"First 5 entries: {results[:5]}")
+
+        
+        start_date = datetime.strptime(results[0]['date'], '%Y-%m-%d')
+        end_date = datetime.strptime(results[-1]['date'], '%Y-%m-%d')
+
+        logger.debug(f"Start date: {start_date}, End date: {end_date}")
+
+        
+        days_difference = (end_date - start_date).days + 1
+        logger.debug(f"Days difference: {days_difference}")
+
+        labels = []
+
+        if days_difference <= 14:
+            
+            logger.debug("Generating daily labels.")
+            for i in range(days_difference):
+                label_date = start_date + timedelta(days=i)
+                labels.append(label_date.strftime('%Y-%m-%d'))
+
+        elif days_difference <= 31:
+            
+            logger.debug("Generating labels every 2 days.")
+            for i in range(0, days_difference, 2):
+                label_date = start_date + timedelta(days=i)
+                labels.append(label_date.strftime('%Y-%m-%d'))
+
+        else:
+            
+            months_difference = (end_date.year - start_date.year) * 12 + end_date.month - start_date.month + 1
+            logger.debug(f"Months difference: {months_difference}")
+
+            if months_difference <= 12:
+                
+                logger.debug("Generating monthly labels.")
+                for i in range(months_difference):
+                    month_label = (start_date + timedelta(days=30 * i)).strftime('%b %Y')
+                    labels.append(month_label)
+
+            elif months_difference <= 24:
+                
+                logger.debug("Generating quarterly labels.")
+                for i in range(0, months_difference, 3):
+                    quarter_label = f"Q{(i // 3) + 1} ({start_date.year + (i // 12)})"
+                    labels.append(quarter_label)
+
+            elif months_difference <= 48:
+                
+                logger.debug("Generating half-yearly labels.")
+                for i in range(0, months_difference, 6):
+                    half_year_label = f"H{(i // 6) + 1} ({start_date.year + (i // 12)})"
+                    labels.append(half_year_label)
+
+            else:
+                
+                logger.debug("Generating yearly labels.")
+                for i in range(0, months_difference, 12):
+                    year_label = f"{start_date.year + (i // 12)}"
+                    labels.append(year_label)
+
+        logger.debug(f"Generated labels: {labels}")
+        logger.debug(f"Label count: {len(labels)}")
+        return labels
 
 
 ### File: E:/Users/Student/Documents/MSc/Python ICA1/CIS4044-N-ICA/ICA/src\output_handler_registry.py (Filename: output_handler_registry.py) ###
@@ -2445,66 +1803,27 @@ class OutputHandlerRegistry:
 
     @classmethod
     def register_handler(cls, name, handler):
-        """
-        Registers a handler by name.
-
-        Parameters
-        ----------
-        name : str
-            The name of the handler.
-        handler : callable
-            A callable object (e.g., function or method) to handle specific output types.
-        """
+        
         cls._handlers[name] = handler
 
     @classmethod
     def get_handler(cls, name):
-        """
-        Retrieves a registered handler by name.
-
-        Parameters
-        ----------
-        name : str
-            The name of the handler.
-
-        Returns
-        -------
-        callable
-            The registered handler if found; otherwise, None.
-        """
+        
         return cls._handlers.get(name)
 
 
 ### File: E:/Users/Student/Documents/MSc/Python ICA1/CIS4044-N-ICA/ICA/src\results_validator.py (Filename: results_validator.py) ###
 
-"""
-Results Validator
 
-Handles the validation of query results for the Weather Data Application.
-"""
 
 import sqlite3
 
 class ResultsValidator:
-    """
-    Validates query results to ensure they are well-formed and contain data.
-    """
+    
 
     @staticmethod
     def validate(results):
-        """
-        Validate query results to ensure they contain data.
-
-        Parameters
-        ----------
-        results : list, float, or None
-            Query results from the database. Can be a list of rows, a numeric value, or None.
-
-        Returns
-        -------
-        bool
-            True if results are valid and contain data; otherwise, False.
-        """
+        
         if results is None:
             print("No data found.")
             return False
@@ -2528,18 +1847,13 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 
 class SessionManager:
-    """
-    Manages SQLAlchemy sessions using the Singleton pattern
-    Ensures that only one instance of the session exists during the application's lifecycle.
-    """
+    
     logger = logging.getLogger(__name__)
 
     _instance = None
 
     def __new__(cls, db_session_factory):
-        """
-        Ensures that only one instance of the SessionManager is created.
-        """
+        
         if cls._instance is None:
             cls._instance = super(SessionManager, cls).__new__(cls)
             cls._instance.db_session_factory = db_session_factory
@@ -2548,10 +1862,7 @@ class SessionManager:
 
 
     def get_session(self):
-        """
-        Returns the session from the session factory.
-        If a session has already been created, returns the existing session.
-        """
+        
         if not hasattr(self, 'session'):
             self.session = self.db_session_factory()
             self.logger.debug("New session created.")
@@ -2559,9 +1870,7 @@ class SessionManager:
 
 
     def commit_session(self):
-        """
-        Commits the current session to the database.
-        """
+        
         try:
             self.logger.debug(f"Committing session: {id(self.session)}")
             self.session.commit()
@@ -2572,9 +1881,7 @@ class SessionManager:
 
 
     def close_session(self):
-        """
-        Closes the current session.
-        """
+        
         if hasattr(self, 'session'):
             self.logger.debug(f"Closing session: {id(self.session)}")
             self.session.close()
@@ -2584,9 +1891,7 @@ class SessionManager:
             self.logger.warning("No session to close.")
 
     def log_session_details(self):
-        """
-        Logs detailed information about the current session's state.
-        """
+        
         if hasattr(self, 'session'):
             self.logger.debug(f"Session details: {id(self.session)}, Active: {self.session.is_active}, Transaction: {self.session.in_transaction()}")
         else:
@@ -2608,106 +1913,48 @@ from collections import defaultdict
 
 
 class SQLiteQuery(DatabaseQueryInterface):
-    """
-    Handles predefined queries for weather-related data from an SQLAlchemy database.
-    Implements DatabaseQueryInterface.
-    """
+    
 
     def __init__(self, session: Session):
-        """
-        Initialize SQLiteQuery with a database session.
-
-        Parameters
-        ----------
-        session : Session
-            SQLAlchemy session for database interactions.
-        """
+        
         self.logger = logging.getLogger(self.__class__.__name__)
         self.session = session
 
 
     def get_all_countries(self):
-        """
-        Retrieve all countries.
-
-        Returns
-        -------
-        list[Country]
-            All countries as SQLAlchemy objects.
-        """
+        
         return self.session.query(Country).all()
 
 
     def get_country_by_name(self, country_name):
-        """
-        Fetch a country by name.
-
-        Parameters
-        ----------
-        country_name : str
-            The country name.
-
-        Returns
-        -------
-        Country or None
-        """
+        
         return self.session.query(Country).filter(Country.name == country_name).first()
 
 
     def get_country_by_id(self, country_name):
-        """
-        Fetch a country by name.
-
-        Parameters
-        ----------
-        country_name : str
-            The country name.
-
-        Returns
-        -------
-        Country or None
-        """
+        
         return self.session.query(Country).filter(Country.name == country_name).first()
 
 
     def get_all_cities(self):
-        """
-        Retrieve all cities.
-
-        Returns
-        -------
-        list[City]
-        """
+        
         return self.session.query(City).all()
 
 
     def get_average_temperature(self, city_id: int, year: int):
-        """
-        Calculate average temperature for a city in a given year.
-
-        Parameters
-        ----------
-        city_id : int
-            City ID.
-        year : int
-            Year.
-
-        Returns
-        -------
-        float or None
-        """
-        # Log the city_id and year
+        
+        
         self.logger.debug(f"Received city_id: {city_id} (type: {type(city_id)}), year: {year} (type: {type(year)})")
 
-        # Generate the start and end dates for the given year
+        
         int_year = int(year)
         start_date = datetime(int_year, 1, 1)
         end_date = datetime(int_year, 12, 31)
 
-        # Log the generated start and end dates with their types
+        
         self.logger.debug(f"Generated start_date: {start_date} (type: {type(start_date)}), end_date: {end_date} (type: {type(end_date)})")
 
-        # Query the database to get the average temperature
+        
         avg_temp = (
             self.session.query(func.avg(DailyWeatherEntry.mean_temp))
             .filter(DailyWeatherEntry.city_id == city_id)
@@ -2715,10 +1962,10 @@ class SQLiteQuery(DatabaseQueryInterface):
             .scalar()
         )
 
-        # Log the result of the query and its type
-        # self.logger.debug(f"Query result avg_temp: {avg_temp} (type: {type(avg_temp)})")
+        
+        
 
-        # Check if the result is None and log accordingly
+        
         if avg_temp is None:
             self.logger.warning(f"No average temperature found for city {city_id} in year {year}.")
         else:
@@ -2727,20 +1974,7 @@ class SQLiteQuery(DatabaseQueryInterface):
 
 
     def get_precipitation_data(self, city_id: int, year: int):
-        """
-        Calculate total precipitation for a city in a given year.
-
-        Parameters
-        ----------
-        city_id : int
-            City ID.
-        year : int
-            Year.
-
-        Returns
-        -------
-        float or None
-        """
+        
         start_date = datetime(year, 1, 1)
         end_date = datetime(year, 12, 31)
 
@@ -2754,20 +1988,7 @@ class SQLiteQuery(DatabaseQueryInterface):
 
 
     def average_seven_day_precipitation(self, city_name, start_date):
-        """
-        Calculate average precipitation over seven days.
-
-        Parameters
-        ----------
-        city_id : int
-            City ID.
-        start_date : str
-            Start date.
-
-        Returns
-        -------
-        float or None
-        """
+        
         start_date = datetime.strptime(start_date, "%Y-%m-%d")
         end_date = start_date + timedelta(days=6)
 
@@ -2785,22 +2006,7 @@ class SQLiteQuery(DatabaseQueryInterface):
 
 
     def average_temp_by_city(self, start_date, end_date, city_name):
-        """
-        Calculate mean temperature for a city between two dates.
-
-        Parameters
-        ----------
-        city_id : int
-            City ID.
-        start_date : str
-            Start date.
-        end_date : str
-            End date.
-
-        Returns
-        -------
-        float or None
-        """
+        
         self.logger.debug(f"Received city: {city_name}, start_date: {start_date}, end_date: {end_date})")
 
         start_date = datetime.strptime(start_date, "%Y-%m-%d")
@@ -2814,7 +2020,7 @@ class SQLiteQuery(DatabaseQueryInterface):
 
         self.logger.debug(f"Fetched city: {city.name} with ID: {city.id}")
 
-        # Query the average temperature for the given city and date range
+        
         avg_temp = (
             self.session.query(func.avg(DailyWeatherEntry.mean_temp))
             .filter(DailyWeatherEntry.city_id == city.id)
@@ -2829,35 +2035,21 @@ class SQLiteQuery(DatabaseQueryInterface):
 
 
     def average_annual_precipitation_by_country(self, country_name, year):
-        """
-        Calculate total precipitation for a country in a given year and return monthly totals.
-
-        Parameters
-        ----------
-        country_name : str
-            Name of the country.
-        year : int
-            Year.
-
-        Returns
-        -------
-        dict
-            A dictionary containing the total annual precipitation and a breakdown by month.
-        """
-        # Retrieve the country
+        
+        
         country = self.session.query(Country).filter(Country.name.ilike(country_name)).first()
 
         if not country:
             self.logger.error(f"Country '{country_name}' not found in the database.")
             return None
 
-        # Define the start and end dates for the year
+        
         start_date = datetime(year, 1, 1)
         end_date = datetime(year, 12, 31)
 
         self.logger.debug(f"Received country: {country.name}, start_date: {start_date}, end_date: {end_date})")
 
-        # Query for monthly precipitation totals per city in the country
+        
         monthly_precip = (
             self.session.query(
                 func.extract('month', DailyWeatherEntry.date).label('month'),
@@ -2872,10 +2064,10 @@ class SQLiteQuery(DatabaseQueryInterface):
             .all()
         )
 
-        # Aggregate the data into a dictionary for monthly precipitation
+        
         monthly_data = {month: round(precip, 2) for month, precip in monthly_precip}
 
-        # Query for total precipitation for the year
+        
         total_precip = (
             self.session.query(func.sum(DailyWeatherEntry.precipitation))
             .join(City, City.id == DailyWeatherEntry.city_id)
@@ -2889,7 +2081,7 @@ class SQLiteQuery(DatabaseQueryInterface):
 
         self.logger.debug(f"Total precipitation for {country_name} in {year}: {total_precip} mm")
 
-        # Return both the total annual precipitation and the monthly breakdown
+        
         return {
             'total_precipitation': total_precip,
             'monthly_precipitation': monthly_data
@@ -2897,54 +2089,19 @@ class SQLiteQuery(DatabaseQueryInterface):
 
 
     def does_city_exist(self, city_name: str):
-        """
-        Check if a city exists in the database by its name using SQLAlchemy.
-
-        Parameters
-        ----------
-        city_name : str
-            The name of the city.
-        session : Session
-            The SQLAlchemy session.
-
-        Returns
-        -------
-        bool
-            True if the city exists, False otherwise.
-        """
+        
         exists_query = self.session.query(exists().where(City.name == city_name))
         return self.session.query(exists_query).scalar()
 
 
     def get_country_id_by_name(self, country_name: str):
-        """
-        Retrieve the country ID based on the country name using SQLAlchemy.
-
-        Parameters
-        ----------
-        country_name : str
-            The name of the country.
-        session : Session
-            The SQLAlchemy session.
-
-        Returns
-        -------
-        int or None
-            The ID of the country, or None if not found.
-        """
+        
         country = self.session.query(Country).filter(Country.name == country_name).first()
         return country.id if country else None
 
 
     def insert_city(self, city_data: dict):
-        """
-        Insert a new city into the database using SQLAlchemy.
-
-        Parameters
-        ----------
-        city_data : dict
-            Dictionary containing city information (name, latitude, longitude, country, timezone).
-        """
+        
         country_id = self.get_country_id_by_name(city_data['country'])
         if country_id is None:
             raise ValueError(f"Country '{city_data['country']}' not found in the database.")
@@ -2964,26 +2121,14 @@ class SQLiteQuery(DatabaseQueryInterface):
 
 
     def get_monthly_average_temperature(self, daily_weather_entries):
-        """
-        Calculate the average temperature for each month.
         
-        Parameters
-        ----------
-        daily_weather_entries : list
-            List of DailyWeatherEntry objects containing daily temperatures and dates.
-        
-        Returns
-        -------
-        dict
-            A dictionary with months as keys and average temperatures as values.
-        """
         monthly_data = defaultdict(list)
 
         for entry in daily_weather_entries:
             month = entry.date.month
             monthly_data[month].append(entry.mean_temp)
 
-        # Calculate average temperature for each month
+        
         monthly_avg_temp = {month: sum(temps)/len(temps) for month, temps in monthly_data.items()}
 
         return monthly_avg_temp
@@ -2998,9 +2143,7 @@ from base_api_service import BaseApiService
 from weather_data import WeatherData
 
 class WeatherApiService(BaseApiService):
-    """
-    Service for interacting with the Open-Meteo Weather Data API.
-    """
+    
     def __init__(self, session: Session, max_retries=3, retry_delay=2):
         base_url = "https://archive-api.open-meteo.com/v1/archive"
         super().__init__(base_url=base_url, max_retries=max_retries, retry_delay=retry_delay)
@@ -3008,27 +2151,7 @@ class WeatherApiService(BaseApiService):
 
 
     def fetch_weather_data(self, latitude, longitude, start_date, end_date, city_id):
-        """
-        Fetch weather data from the Open-Meteo Weather API and store it in the database.
-
-        Parameters
-        ----------
-        latitude : float
-            Latitude of the location.
-        longitude : float
-            Longitude of the location.
-        start_date : str
-            Start date for the data (format: yyyy-mm-dd).
-        end_date : str
-            End date for the data (format: yyyy-mm-dd).
-        city_id : int
-            ID of the city associated with the weather data.
-
-        Returns
-        -------
-        dict
-            Daily weather data for the specified period.
-        """
+        
         self.logger.debug(f"Initial values: {latitude}, {longitude}, {start_date}, {end_date}, {city_id}")
         params = {
             LATITUDE: latitude,
@@ -3042,26 +2165,26 @@ class WeatherApiService(BaseApiService):
 
         try:
             data = self._make_request(params=params)
-            # self.logger.debug(f"weather api, data fetched: {data}")
+            
 
             if "error" in data:
                 self.logger.error(f"Weather API returned an error: {data['error']}")
                 raise ValueError(f"weather_api, Weather API error: {data['error']}")
 
             if "daily" in data:
-                # Create WeatherData object
-                # self.logger.debug(f"Weather data: {data['daily']}")
+                
+                
                 weather_data = WeatherData(data["daily"])
                 self.logger.debug(f"weather_api, Weather data mapped: {weather_data}")
 
                 if weather_data.is_valid():
-                    # self.logger.debug(f"Weather data: {data['daily']}")
+                    
                     self.logger.debug(f"Valid weather data received: {weather_data}")
                     self.logger.debug(f"weather_api_service, City Id: {city_id}.")
 
                     daily_weather_entries = weather_data.map_to_daily_weather(city_id)
                     self.logger.debug(f"Daily weather data: {daily_weather_entries[:5]}")
-                    # self.logger.debug(f"api service, daily_weather_entries: {daily_weather_entries}")
+                    
                     self._store_weather_data(daily_weather_entries, city_id)
                     return daily_weather_entries
                 else:
@@ -3079,19 +2202,10 @@ class WeatherApiService(BaseApiService):
 
 
     def _store_weather_data(self, daily_weather_entries, city_id: int):
-        """
-        Store weather data in the database.
-
-        Parameters
-        ----------
-        daily_weather_entries : list
-            List of DailyWeatherEntry objects to store.
-        city_id : int
-            ID of the city associated with the weather data.
-        """
+        
         self.logger.debug("weather_api_service, _store_weather_data")
         try:
-            # Add each daily weather entry to the session
+            
             for entry in daily_weather_entries:
                 self.session.add(entry)
 
@@ -3114,7 +2228,7 @@ class WeatherData:
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
 
-        # Ensure the weather data is a dictionary
+        
         if not isinstance(weather_data, dict):
             self.logger.error(f"Invalid data format: {type(weather_data)}. Expected a dictionary.")
             raise ValueError("weather_data must be a dictionary.")
@@ -3128,10 +2242,7 @@ class WeatherData:
 
 
     def is_valid(self):
-        """
-        Validate the structure of the weather data.
-        Returns True if all expected fields are present and not empty.
-        """
+        
         if not self.temperature_2m_max or not self.temperature_2m_min or not self.precipitation_sum or not self.dates:
             self.logger.error(f"Invalid weather data. Missing or empty required fields: {self.temperature_2m_max}, {self.temperature_2m_min}, {self.precipitation_sum}, {self.dates}")
             return False
@@ -3139,10 +2250,7 @@ class WeatherData:
 
 
     def is_valid_list(self, weather_data_list):
-        """
-        Validate the structure of each item in the weather data list.
-        Returns True if all items are valid, False otherwise.
-        """
+        
         self.logger.debug(f"weather_day, is_valid_list called for {len(weather_data_list)} items")
 
         for index, weather_data in enumerate(weather_data_list):
@@ -3153,10 +2261,7 @@ class WeatherData:
 
 
     def map_to_daily_weather(self, city_id: int):
-        """
-        Maps the raw weather data to DailyWeatherEntry objects.
-        Returns a list of DailyWeatherEntry objects.
-        """
+        
         if not self.is_valid():
             self.logger.error("Invalid weather data. Missing or empty required fields.")
             raise ValueError("Invalid weather data. Missing or empty required fields.")
@@ -3191,10 +2296,7 @@ class WeatherData:
 
 
     def __str__(self):
-        """
-        Returns a string representation of the WeatherData object.
-        This can be customized to print out relevant information about the weather data.
-        """
+        
         return (f"Weather Data:\n"
                 f"Dates: {len(self.dates)} entries\n"
                 f"Max Temperatures: {self.temperature_2m_max[:5]}... (first 5)\n"
@@ -3228,7 +2330,7 @@ class City(Base):
     timezone = Column(String, nullable=False)
     country_id = Column(Integer, ForeignKey('countries.id'), nullable=False)
 
-    # Relationship to Country model
+    
     country = relationship("Country", back_populates="cities")
     weather_entries = relationship('DailyWeatherEntry', back_populates='city', cascade="all, delete-orphan")
 
@@ -3251,7 +2353,7 @@ class City(Base):
         longitude = self.longitude if self.longitude is not None else 'Unknown'
         country_id = self.country_id if self.country_id is not None else 'Unknown'
 
-        # Handle related Country object
+        
         if self.country:
             country_name = self.country.name if self.country.name else 'Unknown'
         else:

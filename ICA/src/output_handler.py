@@ -1,16 +1,18 @@
 import logging
-import datetime
+from datetime import datetime, date, timedelta
 from models.city import City
 from models.country import Country
 from models.daily_weather_entry import DailyWeatherEntry
 from output_handler_registry import OutputHandlerRegistry
 from sqlalchemy.engine.row import Row
 from constants import *
+
 class OutputHandler:
     """
     Provides methods to display results in the console.
     """
     logger = logging.getLogger(__name__)
+
     @staticmethod
     def handle_output(choice, results, title=None, xlabel=None, ylabel=None):
         """
@@ -19,7 +21,7 @@ class OutputHandler:
         ----------
         choice : int
             The display choice (i.e., 1 for console, 2 for bar chart, etc.).
-        results : list[sqlite3.Row] or single numberic value
+        results : list of dictionaries or single values 
             The data to display.
         title : str, optional
             The title for graphical outputs.
@@ -47,13 +49,13 @@ class OutputHandler:
         }
         handler_name = handlers.get(choice)
         handler = OutputHandlerRegistry.get_handler(handler_name)
-        OutputHandler.logger.debug(f"Handler selected: {handler_name}")
+        # OutputHandler.logger.debug(f"Handler selected: {handler_name}")
         try:
             if handler_name == "console":
                 OutputHandler._display_table(results)
             elif handler:
                 OutputHandler.logger.debug(f"Graphing with labels: {labels} and values: {values}")
-                handler(labels, values, title, xlabel, ylabel)
+                handler(choice, labels, values, title, xlabel, ylabel)
             else:
                 raise ValueError(f"Unsupported output type: {handler_name}")
         except Exception as e:
@@ -72,6 +74,7 @@ class OutputHandler:
             The tabular results to display.
         """
         if not results or not isinstance(results, list):
+            print()
             print("No data to display.")
             return
         if 'Temperature' in results[0]:
@@ -210,52 +213,40 @@ class OutputHandler:
 
         # If results is a dictionary, process it as such
         if isinstance(results, dict):
-            OutputHandler.logger.debug(f"Result is a dictionary: {type(results)}, {results}")
-
-            # Handle specific titles differently
             if 'Average Seven-Day Precipitation' == title:
                 total_precip = results.get('total_precipitation', 0)
-                OutputHandler.logger.debug(f"Total Precipitation: {total_precip}")
+                # OutputHandler.logger.debug(f"Total Precipitation: {total_precip}")
                 results['total_precipitation'] = round(total_precip, 2)
 
             if 'Average Temperature' == title:
-                # Handle the 'monthly_precipitation' directly, assuming it's a dictionary
-                monthly_data = results
-                OutputHandler.logger.debug(f"Monthly Temperature data: {monthly_data}")
+                # OutputHandler.logger.debug(f"Monthly Temperature data: {monthly_data}")
                 standardized_results = [{"Month": month, "Temperature": f"{temp:.2f}"} for month, temp in results.items()]
-                OutputHandler.logger.debug(f"Standardized results: {standardized_results}")
+                # OutputHandler.logger.debug(f"Standardized results: {standardized_results}")
                 return standardized_results
 
             if 'Mean Temperature by City' == title:
                 total_precip = results.get('total_precipitation', 0)
-                OutputHandler.logger.debug(f"Total Precipitation: {total_precip}")
+                # OutputHandler.logger.debug(f"Total Precipitation: {total_precip}")
                 results['total_precipitation'] = round(total_precip, 2)
-
             return results
 
         # Handle the case for lists (including tuples or model instances)
         if isinstance(results, list):
             standardised = []
-            
             for row in results:
-                # If row is a tuple (likely precipitation), handle it differently
                 if isinstance(row, tuple):
-                    # If the tuple only contains one element (precipitation), extract and standardize it
                     OutputHandler.logger.debug(f"Row is a tuple, value: {row[0]}")
                     standardised.append({
                         'precipitation': round(row[0], 2)
                     })
-                # Handle model instances like DailyWeatherEntry, City, etc.
                 elif isinstance(row, DailyWeatherEntry):
-                    OutputHandler.logger.debug(f"Converting DailyWeatherEntry object: {row}")
                     standardised.append({
                         'date': row.date,
-                        'precipitation': round(row.precipitation, 2),
-                        'max_temp': round(row.max_temp, 2),
-                        'min_temp': round(row.min_temp, 2)
+                        'precipitation': float(row.precipitation),
+                        'max_temp': float(row.max_temp),
+                        'min_temp': float(row.min_temp),
                     })
                 elif isinstance(row, (City, Country)):
-                    # Ensure the row has a `to_dict` method
                     if hasattr(row, 'to_dict'):
                         standardised.append(row.to_dict())
                     else:
@@ -263,8 +254,7 @@ class OutputHandler:
                 elif isinstance(row, dict):
                     OutputHandler.logger.debug("Row is already a dictionary")
                     standardised.append(row)
-
-            OutputHandler.logger.debug(f"Standardized list: {standardised}")
+            # OutputHandler.logger.debug(f"Standardized list: {standardised}")
             return standardised
 
         # If results is neither a numeric value nor a dictionary/list, return an empty list
@@ -295,21 +285,28 @@ class OutputHandler:
         tuple[list, list]
             A tuple containing labels (x-axis) and values (y-axis) for charts.
         """
-        # OutputHandler.logger.debug(f"extracting labels for results of type: {type(results[0])}, {results[:5]}")
+
         # Handle empty results
         if not results or not isinstance(results[0], dict):
             return ["No data"], [0]
+        
+        if isinstance(results[0], dict) and 'date' in results[0] and 'precipitation' in results[0]:
+            labels = [str(row['date']) for row in results]
+            values = [row['precipitation'] for row in results]
+            return labels, values
+
         # Dynamically extract keys as labels and values
         labels = list(results[0].keys())
         if isinstance(results[0], dict) and "Month" in results[0]:
             # If it's a dictionary with 'Month' and 'Temperature'
             values = [row["Temperature"] for row in results]
-            labels = [row["Month"] for row in results]
+            labels = OutputHandler._generate_time_period_labels(results)
         else:
             values = [list(row.values()) for row in results]
             labels = [list(row.keys()) for row in results]
         # OutputHandler.logger.debug(f"output_handler, labels: {labels}, values: {values}, of type: {type(values)}")
         return labels, values
+
     @staticmethod
     def handle_console(results):
         """
@@ -351,3 +348,88 @@ class OutputHandler:
             A list of dictionaries representing the rows.
         """
         return [dict(row) for row in rows]
+
+    @staticmethod
+    def _generate_time_period_labels(results):
+        """
+        Generate labels for the x-axis based on the time period of the results.
+
+        Parameters
+        ----------
+        results : list[dict]
+            A list of results where each result contains a 'date' key (in 'YYYY-MM-DD' format).
+
+        Returns
+        -------
+        list[str]
+            A list of labels for the x-axis.
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+
+        # Log the input type and data
+        logger.debug(f"Received results of type: {type(results)}")
+        logger.debug(f"First 5 entries: {results[:5]}")
+
+        # Extract the start and end dates
+        start_date = datetime.strptime(results[0]['date'], '%Y-%m-%d')
+        end_date = datetime.strptime(results[-1]['date'], '%Y-%m-%d')
+
+        logger.debug(f"Start date: {start_date}, End date: {end_date}")
+
+        # Calculate the number of days between the start and end dates
+        days_difference = (end_date - start_date).days + 1
+        logger.debug(f"Days difference: {days_difference}")
+
+        labels = []
+
+        if days_difference <= 14:
+            # For 7-14 days, use daily labels
+            logger.debug("Generating daily labels.")
+            for i in range(days_difference):
+                label_date = start_date + timedelta(days=i)
+                labels.append(label_date.strftime('%Y-%m-%d'))
+
+        elif days_difference <= 31:
+            # For 15-31 days, use labels every 2 days
+            logger.debug("Generating labels every 2 days.")
+            for i in range(0, days_difference, 2):
+                label_date = start_date + timedelta(days=i)
+                labels.append(label_date.strftime('%Y-%m-%d'))
+
+        else:
+            # Calculate the number of months between the start and end dates
+            months_difference = (end_date.year - start_date.year) * 12 + end_date.month - start_date.month + 1
+            logger.debug(f"Months difference: {months_difference}")
+
+            if months_difference <= 12:
+                # For 12 months or less, use month labels
+                logger.debug("Generating monthly labels.")
+                for i in range(months_difference):
+                    month_label = (start_date + timedelta(days=30 * i)).strftime('%b %Y')
+                    labels.append(month_label)
+
+            elif months_difference <= 24:
+                # For 13-24 months, use quarterly labels
+                logger.debug("Generating quarterly labels.")
+                for i in range(0, months_difference, 3):
+                    quarter_label = f"Q{(i // 3) + 1} ({start_date.year + (i // 12)})"
+                    labels.append(quarter_label)
+
+            elif months_difference <= 48:
+                # For 25-48 months, use half-yearly labels
+                logger.debug("Generating half-yearly labels.")
+                for i in range(0, months_difference, 6):
+                    half_year_label = f"H{(i // 6) + 1} ({start_date.year + (i // 12)})"
+                    labels.append(half_year_label)
+
+            else:
+                # For 49 months or more, use yearly labels
+                logger.debug("Generating yearly labels.")
+                for i in range(0, months_difference, 12):
+                    year_label = f"{start_date.year + (i // 12)}"
+                    labels.append(year_label)
+
+        logger.debug(f"Generated labels: {labels}")
+        logger.debug(f"Label count: {len(labels)}")
+        return labels
