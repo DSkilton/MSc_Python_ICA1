@@ -199,8 +199,6 @@ class LocationManager:
         # Fetch weather data for the city
         weather_data = self.fetch_weather_data_for_city(city, start_date, end_date)
 
-        self.logger.error(f"Weather dated fetched '{weather_data[:5]}'")
-
         if not weather_data:
             self.logger.error(f"Failed to fetch valid weather data for city '{city.name}'.")
             return {}

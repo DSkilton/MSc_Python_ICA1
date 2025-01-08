@@ -1,5 +1,20 @@
-# TODO: Sort this! 
-https://stackoverflow.com/questions/31684375/automatically-create-file-requirements-txt
+# Database and ORM
+sqlalchemy
 
-pip install pipreqs
-pipreqs /path/to/project
+# API Requests
+requests
+
+# Graphing and Visualization
+matplotlib
+
+# Logging (built-in but optional for enhancement)
+logging
+
+# SQL Database Support (SQLite)
+pysqlite3
+
+# For handling data validation and type-checking
+typing-extensions
+
+# Environment Variables (optional if needed for secrets)
+python-dotenv

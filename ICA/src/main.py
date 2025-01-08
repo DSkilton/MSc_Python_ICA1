@@ -54,7 +54,7 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger(__name__)
-logging.getLogger('matplotlib').setLevel(logging.WARNING)
+logging.getLogger('matplotlib').setLevel(logging.INFO)
 
 class WeatherDataApplication:
     """

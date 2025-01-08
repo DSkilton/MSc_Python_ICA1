@@ -65,7 +65,8 @@ class WeatherData:
                 self.temperature_2m_min,
                 self.precipitation_sum
         ):
-
+            
+            # self.logger.debug(f"Mapping weather data - Date: {date}, Max Temp: {temp_max}, Min Temp: {temp_min}, Precipitation: {precip}")
             mean_temp = (temp_max + temp_min) / 2 if temp_max is not None and temp_min is not None else 0
 
             daily_weather_entries.append(
